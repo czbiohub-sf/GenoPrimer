@@ -1,6 +1,9 @@
 import argparse
 import sys
 import linecache
+import primer3
+import csv
+import pandas as pd
 
 class MyParser(argparse.ArgumentParser):
     def error(self, message):
@@ -10,8 +13,8 @@ class MyParser(argparse.ArgumentParser):
 
 def parse_args():
     parser= MyParser(description='This script designs primers around the gRNA cut site')
-    parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', , metavar='')
-    parser.add_argument('--type', default="Miseq", type=str, help='MiSeq:300-350bp, PacBio: 3kb', , metavar='')
+    parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', metavar='')
+    parser.add_argument('--type', default="MiSeq", type=str, help='MiSeq:300-350bp, PacBio: 3kb', metavar='')
     config = parser.parse_args()
     if len(sys.argv)==1: # print help message if arguments are not valid
         parser.print_help()
@@ -25,7 +28,9 @@ config = vars(parse_args())
 #####################    
 def main():
     try: 
-        print("insert main code here")
+
+            df = pd.read_excel(os.path.join(config['csv']), sheet_name="Oocyst_count")
+
     except Exception  as e:
         print("Unexpected error:", str(sys.exc_info()))
         print("additional information:", e)
