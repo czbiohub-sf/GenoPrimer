@@ -25,6 +25,7 @@ def parse_args():
 
 config = vars(parse_args())
 
+amp_len = 400
 #####################
 ##      main       ##
 #####################    
@@ -42,7 +43,7 @@ def main():
 
             print(f"{Ensemble_ID} {Ensemble_spp} {Ensemble_chr} {Ensemble_chr_left_idx} {Ensemble_chr_right_idx} {gRNACut_in_chr}")
 
-            amp_len = 400
+
             amp_st = str(int(int(gRNACut_in_chr) - int(amp_len)/2))
             amp_en = str(int(int(gRNACut_in_chr) + int(amp_len)/2))
 
@@ -127,8 +128,8 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return):
             'PRIMER_MAX_SELF_END': 8,
             'PRIMER_PAIR_MAX_COMPL_ANY': 12,
             'PRIMER_PAIR_MAX_COMPL_END': 8,
-            'PRIMER_PRODUCT_SIZE_RANGE': [[200, 500]],
-            'PRIMER_NUM_RETURN': 4,
+            'PRIMER_PRODUCT_SIZE_RANGE': [[prod_size_lower, prod_size_upper]],
+            'PRIMER_NUM_RETURN': num_return,
         })
 
     # go through primers found
