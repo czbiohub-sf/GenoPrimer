@@ -4,6 +4,7 @@ import linecache
 import primer3
 import os
 import pandas as pd
+import requests
 
 class MyParser(argparse.ArgumentParser):
     def error(self, message):
@@ -37,7 +38,11 @@ def main():
             gRNACut_in_gene = row["gRNACut_in_gene"]
 
 
-            print(f"{Ensemble_ID} {Ensemble_spp} {Ensemble_chr_left_idx} {Ensemble_chr_right_idx} {gRNACut_in_gene}")
+            print(f"{Ensemble_ID} {Ensemble_spp} {Ensemble_chr_left_idx} {Ensemble_chr_right_idx} {gRNACut_in_chr}")
+
+            chr_region = fetch_ensembl_sequence(chromosome = "", region_lef = Ensemble_chr_left_idx, region_right = Ensemble_chr_right_idx,expand=0):
+
+
 
         get_primers(prod_size_lower=300, prod_size_upper=350, num_return = 3)
 
@@ -58,6 +63,28 @@ def PrintException():
     linecache.checkcache(filename)
     line = linecache.getline(filename, lineno, f.f_globals)
     print('EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj))
+
+
+def fetch_ensembl_sequence(
+        chromosome,
+        region_left,
+        region_right,
+        expand=0):
+    '''
+    Returns genome sequence based on chromosome range. The sequence is expanded by a flat amount on both the 5 and
+    3 termini.
+    '''
+
+    base_url = "http://rest.ensembl.org"
+    ext = f"/sequence/region/human/{chromosome}:{region_left}..{region_right}:1?expand_5prime={expand};expand_3prime={expand}"
+    r = requests.get(base_url + ext, headers={"Content-Type": "text/plain"})
+
+    if not r.ok:
+        r.raise_for_status()
+
+    # sequence = Seq(r.text, IUPACUnambiguousDNA())
+    sequence = Seq(r.text)
+    return sequence
 
 def get_primers(prod_size_lower, prod_size_upper, num_return):
     """
