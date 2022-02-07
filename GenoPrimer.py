@@ -7,6 +7,7 @@ import pandas as pd
 import requests
 from Bio.Seq import Seq
 import re
+import datetime
 import csv
 
 class MyParser(argparse.ArgumentParser):
@@ -31,11 +32,13 @@ if config['type'] == "PacBio":
     amp_len = 3500
     prod_size_lower = 2800
     prod_size_upper = 3200
+    step_size = 100
 
 else:
     amp_len = 400
     prod_size_lower = 300
     prod_size_upper = 350
+    step_size = 30
 
 #####################
 ##      main       ##
@@ -46,6 +49,11 @@ def main():
         with open(os.path.join(f"{config['csv'].rstrip('csv')}primer.csv"), 'w') as outcsv:
             outcsv.write(",".join(list(df.columns) + ["Primer Pair 1 For", "Primer Pair 1 Rev", "Primer Pair 1 For tm", "Primer Pair 1 Rev tm", "Primer Pair 1 Prod Size", "Primer Pair 2 For", "Primer Pair 2 Rev", "Primer Pair 2 For tm", "Primer Pair 2 Rev tm", "Primer Pair 2 Prod Size", "Primer Pair 3 For", "Primer Pair 3 Rev", "Primer Pair 3 For tm", "Primer Pair 3 Rev tm", "Primer Pair 3 Prod Size"])) #header
             outcsv.write("\n")
+            starttime = datetime.datetime.now()
+            cutsite_count = 0
+            primer_count = 0
+
+            #go over each cutsite
             for index, row in df.iterrows():
                 Ensemble_ID = row["Ensemble_ID"]
                 Ensemble_spp = row["Ensemble_ref"]
@@ -54,15 +62,18 @@ def main():
                 Ensemble_chr_right_idx = row["Ensemble_chr_right_idx"]
                 gRNACut_in_chr = row["gRNACut_in_chr"]
 
-                print(f"{Ensemble_ID} {Ensemble_spp} {Ensemble_chr} {Ensemble_chr_left_idx} {Ensemble_chr_right_idx} {gRNACut_in_chr}")
+                print(f"Processing cutsite: EnsembleID:{Ensemble_ID}, Genome:{Ensemble_spp}, Chr:{Ensemble_chr}, cut_coordinate: {gRNACut_in_chr}")
 
-                amp_st = str(int(int(gRNACut_in_chr) - int(amp_len)/2) - 150) # buffer zone = 300bp
-                amp_en = str(int(int(gRNACut_in_chr) + int(amp_len)/2) + 150) # buffer zone = 300bp
-
+                #get sequence from chromosome, get 150bp extra on each side, will progressively include in considered zone if no primers were found
+                amp_st = str(int(int(gRNACut_in_chr) - int(amp_len)/2) - step_size*3 ) # buffer zone = step_size*3 bp
+                amp_en = str(int(int(gRNACut_in_chr) + int(amp_len)/2) + step_size*3 ) # buffer zone = step_size*3 bp
                 chr_region = get_ensembl_sequence(chromosome = Ensemble_chr, region_left = amp_st, region_right = amp_en, species = "human",expand=0)
+
+                #get left/right 10kb for off target analysis
                 chr_region_left10kb = get_ensembl_sequence(chromosome = Ensemble_chr, region_left = str(int(amp_st)-10000), region_right = amp_st, species = "human",expand=0)
                 chr_region_right10kb = get_ensembl_sequence(chromosome = Ensemble_chr, region_left = amp_en, region_right = str(int(amp_en)+10000), species = "human",expand=0)
 
+                #design primer
                 primerlist = get_primers(inputSeq = str(chr_region),
                                          left10kb = str(chr_region_left10kb),
                                          right10kb = str(chr_region_right10kb),
@@ -70,15 +81,22 @@ def main():
                                          prod_size_upper=prod_size_upper,
                                          num_return = 3)
 
+                #process primers found
                 if primerlist is None: #no primers found
                     csvwriter.writerow(row + ["NO primers found"])
                 else:
-                    tmp_list = flatten([[i["Lseq"], i["Rseq"], str(i["Ltm"]), str(i["Rtm"]), str(i["prodSize"])] for i in primerlist])
+                    tmp_list = flatten([[i["Lseq"], i["Rseq"], str(round(i["Ltm"],2)), str(round(i["Rtm"],2)), str(i["prodSize"])] for i in primerlist])
                     csvrow = [str(item) for item in row]
                     outcsv.write(",".join(csvrow) + "," + ",".join(tmp_list))
                     outcsv.write("\n")
+                    primer_count += len(primerlist)
 
-            print("done")
+                cutsite_count += 1
+
+            endtime = datetime.datetime.now()
+            elapsed_sec = endtime - starttime
+            elapsed_min = elapsed_sec.seconds / 60
+            print(f"finished in {elapsed_min:.2f} min, processed {cutsite_count} cutsite, designed {primer_count} primers")
     except Exception  as e:
         print("Unexpected error:", str(sys.exc_info()))
         print("additional information:", e)
@@ -131,7 +149,7 @@ def get_primers(inputSeq, left10kb, right10kb, prod_size_lower, prod_size_upper,
     User_dict1={
             'SEQUENCE_ID': 'inputSeq',
             'SEQUENCE_TEMPLATE': inputSeq,
-            'SEQUENCE_INCLUDED_REGION': [1+150, (len(inputSeq)-1)-150] # 150bp buffer zone on each side
+            'SEQUENCE_INCLUDED_REGION': [1 + step_size*3, (len(inputSeq)-1) - step_size*3] # 90bp buffer zone on each side
     }
     User_dict2 = {
             'PRIMER_PRODUCT_SIZE_RANGE': [[prod_size_lower, prod_size_upper]],
@@ -223,10 +241,10 @@ def relax_MIN_MAX_TM(thermo_dict):
     return thermo_dict
 
 def relax_amp_size(User_dict1,User_dict2):
-    User_dict1["SEQUENCE_INCLUDED_REGION"] = [User_dict1["SEQUENCE_INCLUDED_REGION"][0] - 50,
-                                              User_dict1["SEQUENCE_INCLUDED_REGION"][1] + 50]
-    User_dict2["PRIMER_PRODUCT_SIZE_RANGE"] = [[User_dict2["PRIMER_PRODUCT_SIZE_RANGE"][0][0] + 50,
-                                                 User_dict2["PRIMER_PRODUCT_SIZE_RANGE"][0][1] + 50]]
+    User_dict1["SEQUENCE_INCLUDED_REGION"] = [User_dict1["SEQUENCE_INCLUDED_REGION"][0] - step_size,
+                                              User_dict1["SEQUENCE_INCLUDED_REGION"][1] + step_size]
+    User_dict2["PRIMER_PRODUCT_SIZE_RANGE"] = [[User_dict2["PRIMER_PRODUCT_SIZE_RANGE"][0][0] + step_size*2,
+                                                 User_dict2["PRIMER_PRODUCT_SIZE_RANGE"][0][1] + step_size*2]]
 
     return [User_dict1, User_dict2]
 
