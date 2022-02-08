@@ -73,7 +73,7 @@ def get_primers(inputSeq, left10kb, right10kb, prod_size_lower, prod_size_upper,
     primer_pair_num = dict_primers['PRIMER_PAIR_NUM_RETURNED'] - len(dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"])
 
 
-
+    relaxation_count = 0
     if primer_pair_num < 1: #no primers found
         relaxation_count = 1
         while (relaxation_count < 7 or primer_pair_num < 1):
@@ -107,7 +107,7 @@ def get_primers(inputSeq, left10kb, right10kb, prod_size_lower, prod_size_upper,
                 tmpDict["Rtm"] = dict_primers["PRIMER_RIGHT_{}_TM".format(i)]
                 tmpDict["prodSize"] = dict_primers["PRIMER_PAIR_{}_PRODUCT_SIZE".format(i)]
                 primer_list.append(tmpDict)
-        return primer_list
+        return [primer_list, relaxation_count]
 
 def get_default_thermo_dict():
     return {

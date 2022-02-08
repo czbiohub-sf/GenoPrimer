@@ -62,7 +62,7 @@ def main():
 
         #read input csv file
         with open(os.path.join(f"{config['csv'].rstrip('csv')}primer.csv"), 'w') as outcsv:
-            outcsv.write(",".join(list(df.columns) + ["Primer Pair 1 For", "Primer Pair 1 Rev", "Primer Pair 1 For tm", "Primer Pair 1 Rev tm", "Primer Pair 1 Prod Size", "Primer Pair 2 For", "Primer Pair 2 Rev", "Primer Pair 2 For tm", "Primer Pair 2 Rev tm", "Primer Pair 2 Prod Size", "Primer Pair 3 For", "Primer Pair 3 Rev", "Primer Pair 3 For tm", "Primer Pair 3 Rev tm", "Primer Pair 3 Prod Size"])) #header
+            outcsv.write(",".join(list(df.columns) + ["Rounds_relax_of_primer_criteria", "Primer Pair 1 For", "Primer Pair 1 Rev", "Primer Pair 1 For tm", "Primer Pair 1 Rev tm", "Primer Pair 1 Prod Size", "Primer Pair 2 For", "Primer Pair 2 Rev", "Primer Pair 2 For tm", "Primer Pair 2 Rev tm", "Primer Pair 2 Prod Size", "Primer Pair 3 For", "Primer Pair 3 Rev", "Primer Pair 3 For tm", "Primer Pair 3 Rev tm", "Primer Pair 3 Prod Size"])) #header
             outcsv.write("\n")
             starttime = datetime.datetime.now()
             cutsite_count = 0
@@ -88,7 +88,7 @@ def main():
                 chr_region_right10kb = get_ensembl_sequence(chromosome = Ensemble_chr, region_left = amp_en, region_right = str(int(amp_en)+10000), species = "human",expand=0)
 
                 #design primer
-                primerlist = get_primers(inputSeq = str(chr_region),
+                primerlist, relaxation_count = get_primers(inputSeq = str(chr_region),
                                          left10kb = str(chr_region_left10kb),
                                          right10kb = str(chr_region_right10kb),
                                          prod_size_lower=prod_size_lower,
@@ -102,7 +102,7 @@ def main():
                 else:
                     tmp_list = flatten([[i["Lseq"], i["Rseq"], str(round(i["Ltm"],2)), str(round(i["Rtm"],2)), str(i["prodSize"])] for i in primerlist])
                     csvrow = [str(item) for item in row]
-                    outcsv.write(",".join(csvrow) + "," + ",".join(tmp_list))
+                    outcsv.write(",".join(csvrow) + "," + str(relaxation_count) + "," + ",".join(tmp_list))
                     outcsv.write("\n")
                     primer_count += len(primerlist)
 
@@ -113,6 +113,7 @@ def main():
             elapsed_min = elapsed_sec.seconds / 60
             log.info(f"finished in {elapsed_min:.2f} min, processed {cutsite_count} cutsite, designed {primer_count} primers")
             #print(f"finished in {elapsed_min:.2f} min, processed {cutsite_count} cutsite, designed {primer_count} primers")
+
     except Exception  as e:
         print("Unexpected error:", str(sys.exc_info()))
         print("additional information:", e)
