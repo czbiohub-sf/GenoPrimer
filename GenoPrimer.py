@@ -26,17 +26,17 @@ def parse_args():
 
 config = vars(parse_args())
 
+#default settings for MiSeq
+amp_len = 300
+prod_size_lower = 240
+prod_size_upper = 280
+step_size = 30
+
 if config['type'] == "PacBio":
     amp_len = 3500
     prod_size_lower = 2800
     prod_size_upper = 3200
     step_size = 100
-
-else:
-    amp_len = 400
-    prod_size_lower = 300
-    prod_size_upper = 350
-    step_size = 30
 
 logging.setLoggerClass(ColoredLogger)
 #logging.basicConfig()

@@ -75,13 +75,12 @@ def get_primers(inputSeq, left10kb, right10kb, prod_size_lower, prod_size_upper,
 
     relaxation_count = 0
     if primer_pair_num < 1: #no primers found
-        relaxation_count = 1
         while (relaxation_count < 7 or primer_pair_num < 1):
             #alternate between two relaxations
             if relaxation_count % 2 == 0:
                 thermo_dict = relax_MIN_MAX_TM(thermo_dict) #relax thermodynamics
             else:
-                User_dict1, User_dict2 = relax_amp_size(User_dict1, User_dict2) #relax amplicon size
+                User_dict1, User_dict2 = relax_amp_size(User_dict1, User_dict2, step_size) #relax amplicon size
             dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
             # check unintended products
             dict_primers = check_unintended_products(dict_primers=dict_primers,
@@ -139,11 +138,11 @@ def relax_MIN_MAX_TM(thermo_dict):
     :param thermo_dict:
     :return: thermo_dict
     """
-    thermo_dict['PRIMER_MIN_TM'] -= 1
-    thermo_dict['PRIMER_MAX_TM'] += 1
+    thermo_dict['PRIMER_MIN_TM'] -= 0.5
+    thermo_dict['PRIMER_MAX_TM'] += 0.5
     return thermo_dict
 
-def relax_amp_size(User_dict1,User_dict2):
+def relax_amp_size(User_dict1,User_dict2,step_size):
     User_dict1["SEQUENCE_INCLUDED_REGION"] = [User_dict1["SEQUENCE_INCLUDED_REGION"][0] - step_size,
                                               User_dict1["SEQUENCE_INCLUDED_REGION"][1] + step_size]
     User_dict2["PRIMER_PRODUCT_SIZE_RANGE"] = [[User_dict2["PRIMER_PRODUCT_SIZE_RANGE"][0][0] + step_size*2,
