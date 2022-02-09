@@ -1,5 +1,5 @@
 # GenoPrimer
-Automated primer design for genotyping CRISPR edited cells
+Automated primer design for genotyping CRISPR edited cells via amplicon sequencing
 
 ## Features
 - Two modes: MiSeq (250bp amplicon) and PacBio (~3000bp amplicon)
