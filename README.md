@@ -10,28 +10,26 @@ Automated primer design for genotyping CRISPR edited cells
 
 - A csv file containing minimumlly four columns (with the exact names) describing each gene/primer design:
   (these)
-  - Ensemble_ID  
-    The transcript ID 
-  - Ensemble_ref  
-    The genome/build version
-  - Ensemble_chr  
-    The chromosome
-  - gRNACut_in_chr  
-    Center position of the amplicon, in coordinates on the chromosome
+  - Ensemble_ID (The transcript ID, e.g., ENST00000263736)  
+  - Ensemble_ref (The genome/build version, e.g., GRCh38)  
+  - Ensemble_chr (e.g. 2)  
+  - gRNACut_in_chr (Center position of the amplicon, in the form of coordinates on the chromosome, e.g. 45389323)   
+    
+## Outputs:
+- A csv file with the input information + new columns: 
+  -  Up to three pairs of primers for each gene/row, including Tm and expected product size.
+  -  A numeric number indicating how many rounds of criteria relaxation before yielding primers (column "Rounds_relax_of_primer_criteria")
+
+
+&nbsp;
+## Usage:
+```
+python GenoPrimer.py --csv test_data/test.csv
+```
+
 
 ## Dependencies
 Python 3.5-3.8 (as required by primer3-py)  
 See "requirements.txt" for a complete list of dependencies
 
 
-
-
-## Outputs:
-- Genotype frequencies for each sample (.csv file)
-- Alleles frequencies table (A folder containing a table of read-to-genotype assignments for each sample)
-
-&nbsp;
-## Usage:
-```
-python DeepGenotype.py --path2csv test_dir/test.csv --path2workDir test_dir/ --path2fastqDir test_dir/fastq_dir/
-```
