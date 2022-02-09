@@ -8,8 +8,16 @@ Automated primer design for genotyping CRISPR edited cells
 
 ## Inputs
 
-- A csv file containing minimumlly two columns:
-  -
+- A csv file containing minimumlly four columns (with the exact names) describing each gene/primer design:
+  (these)
+  - Ensemble_ID  
+    The transcript ID 
+  - Ensemble_ref  
+    The genome/build version
+  - Ensemble_chr  
+    The chromosome
+  - gRNACut_in_chr  
+    Center position of the amplicon, in coordinates on the chromosome
 
 ## Dependencies
 Python 3.5-3.8 (as required by primer3-py)  
