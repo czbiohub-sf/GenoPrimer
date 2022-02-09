@@ -24,7 +24,7 @@ Automated primer design for genotyping CRISPR edited cells via amplicon sequenci
 &nbsp;
 ## Usage:
 ```
-python GenoPrimer.py --csv test_data/test.csv
+python GenoPrimer.py --csv test_data/test.csv --type "MiSeq"
 ```
 
 
