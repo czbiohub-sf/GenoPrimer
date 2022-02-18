@@ -24,7 +24,8 @@ Automated primer design for genotyping CRISPR edited cells via amplicon sequenci
   -  A numeric number indicating how many rounds of criteria relaxation before yielding primers (column "Rounds_relax_of_primer_criteria")
 
 ## Workflow (gene/primer design) 
-![image](https://user-images.githubusercontent.com/4129442/153317761-659d4ea8-88bb-4c69-bdf5-05e2a168d4ea.png)
+<img width="1027" alt="image" src="https://user-images.githubusercontent.com/4129442/154752321-14e3f6c9-0a4c-435a-8c46-99d1a0893356.png">
+
 
 &nbsp;
 ## Usage:
