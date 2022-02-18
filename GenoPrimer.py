@@ -6,7 +6,7 @@ import pandas as pd
 import csv
 import datetime
 from utils import *
-
+import gc
 
 class MyParser(argparse.ArgumentParser):
     def error(self, message):
@@ -25,10 +25,11 @@ def parse_args():
     return config
 
 config = vars(parse_args())
+num_primer_return = 3
 
 #default settings for MiSeq
 amp_len = 300
-prod_size_lower = 240
+prod_size_lower = 230
 prod_size_upper = 280
 step_size = 30
 
@@ -62,11 +63,13 @@ def main():
 
         #read input csv file
         with open(os.path.join(f"{config['csv'].rstrip('csv')}primer.csv"), 'w') as outcsv:
-            outcsv.write(",".join(list(df.columns) + ["Rounds_relax_of_primer_criteria", "Primer Pair 1 For", "Primer Pair 1 Rev", "Primer Pair 1 For tm", "Primer Pair 1 Rev tm", "Primer Pair 1 Prod Size", "Primer Pair 2 For", "Primer Pair 2 Rev", "Primer Pair 2 For tm", "Primer Pair 2 Rev tm", "Primer Pair 2 Prod Size", "Primer Pair 3 For", "Primer Pair 3 Rev", "Primer Pair 3 For tm", "Primer Pair 3 Rev tm", "Primer Pair 3 Prod Size"])) #header
+            outcsv.write(",".join(list(df.columns) + ["Constraints_relaxation_iterations", "Primer Pair 1 For", "Primer Pair 1 Rev", "Primer Pair 1 For tm", "Primer Pair 1 Rev tm", "Primer Pair 1 Prod Size", "Primer Pair 2 For", "Primer Pair 2 Rev", "Primer Pair 2 For tm", "Primer Pair 2 Rev tm", "Primer Pair 2 Prod Size", "Primer Pair 3 For", "Primer Pair 3 Rev", "Primer Pair 3 For tm", "Primer Pair 3 Rev tm", "Primer Pair 3 Prod Size"])) #header
             outcsv.write("\n")
             starttime = datetime.datetime.now()
             cutsite_count = 0
             primer_count = 0
+            good_primer_count = 0
+            cutsite_count_noprimer = 0
 
             #go over each cutsite
             for index, row in df.iterrows():
@@ -75,8 +78,7 @@ def main():
                 Ensemble_chr = row["Ensemble_chr"]
                 gRNACut_in_chr = row["gRNACut_in_chr"]
 
-                log.info(f"Processing cutsite: EnsembleID:{Ensemble_ID}, Genome:{Ensemble_spp}, Chr:{Ensemble_chr}, cut_coordinate: {gRNACut_in_chr}")
-                #print(f"Processing cutsite: EnsembleID:{Ensemble_ID}, Genome:{Ensemble_spp}, Chr:{Ensemble_chr}, cut_coordinate: {gRNACut_in_chr}")
+                log.info(f"({index+1}/{len(df.index)}) Processing cutsite: EnsembleID:{Ensemble_ID}, Genome:{Ensemble_spp}, Chr:{Ensemble_chr}, cut_coordinate: {gRNACut_in_chr}")
 
                 #get sequence from chromosome, get 150bp extra on each side, will progressively include in considered zone if no primers were found
                 amp_st = str(int(int(gRNACut_in_chr) - int(amp_len)/2) - step_size*3 ) # buffer zone = step_size*3 bp
@@ -88,30 +90,35 @@ def main():
                 chr_region_right10kb = get_ensembl_sequence(chromosome = Ensemble_chr, region_left = amp_en, region_right = str(int(amp_en)+10000), species = "human",expand=0)
 
                 #design primer
-                primerlist, relaxation_count = get_primers(inputSeq = str(chr_region),
-                                         left10kb = str(chr_region_left10kb),
-                                         right10kb = str(chr_region_right10kb),
+                primerlist, relaxation_count, good_primer_num = get_primers(inputSeq = str(chr_region),
                                          prod_size_lower=prod_size_lower,
                                          prod_size_upper=prod_size_upper,
-                                         num_return = 3,
-                                         step_size = step_size)
+                                         num_return = num_primer_return,
+                                         step_size = step_size,
+                                         chr = Ensemble_chr,
+                                         cut_coord = gRNACut_in_chr)
 
                 #process primers found
                 if primerlist is None: #no primers found
-                    csvwriter.writerow(row + ["NO primers found"])
+                    csvrow = [str(item) for item in row]
+                    outcsv.write(",".join(csvrow) + "," + str(relaxation_count) + "," + "No qualifying primer-pairs found")
+                    outcsv.write("\n")
+                    cutsite_count_noprimer+=1
                 else:
                     tmp_list = flatten([[i["Lseq"], i["Rseq"], str(round(i["Ltm"],2)), str(round(i["Rtm"],2)), str(i["prodSize"])] for i in primerlist])
                     csvrow = [str(item) for item in row]
                     outcsv.write(",".join(csvrow) + "," + str(relaxation_count) + "," + ",".join(tmp_list))
                     outcsv.write("\n")
                     primer_count += len(primerlist)
+                    good_primer_count += good_primer_num
 
                 cutsite_count += 1
+                gc.collect()
 
             endtime = datetime.datetime.now()
             elapsed_sec = endtime - starttime
             elapsed_min = elapsed_sec.seconds / 60
-            log.info(f"finished in {elapsed_min:.2f} min, processed {cutsite_count} cutsite, designed {primer_count} primers")
+            log.info(f"finished in {elapsed_min:.2f} min, processed {cutsite_count} site(s), found {good_primer_count} primer pair(s), outputted {primer_count} primer pair(s), {cutsite_count_noprimer} cutcite(s) failed to yield primers")
             #print(f"finished in {elapsed_min:.2f} min, processed {cutsite_count} cutsite, designed {primer_count} primers")
 
     except Exception  as e:
