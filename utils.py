@@ -39,7 +39,7 @@ def get_ensembl_sequence(chromosome,region_left,region_right,species,expand=0):
     sequence = Seq(r.text)
     return sequence
 
-def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_size, chr, cut_coord):
+def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_size, chr, cut_coord, min_dist2center, num_primers_from_Primer3,fhlog):
     """
     :param prod_size_lower:   product size upper bound
     :param prod_size_upper:   product size lower bound
@@ -51,7 +51,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
     ##################
     #setup parameters#
     ##################
-    max_dist2center = 100
+    min_dist2center = min_dist2center
 
     #create dicts as inputs for primer3
     thermo_dict = get_default_thermo_dict()
@@ -60,16 +60,16 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
             'SEQUENCE_ID': 'inputSeq',
             'SEQUENCE_TEMPLATE': inputSeq,
             'SEQUENCE_EXCLUDED_REGION': [[1,3*step_size],
-                                         [math.floor(len(inputSeq)/2) - max_dist2center, 2*max_dist2center],
+                                         [math.floor(len(inputSeq)/2) - min_dist2center, 2*min_dist2center],
                                          [len(inputSeq)-3*step_size-1, 3*step_size]]
             #'SEQUENCE_PRIMER_PAIR_OK_REGION_LIST ': [[1 + step_size*3,                                                                    #Forward primer region start
-            #                                         math.floor(len(inputSeq)/2) - max_dist2center - 1 - step_size*3,                     #Forward primer region length
-            #                                         math.floor(len(inputSeq)/2) + max_dist2center,                                       #Reverse primer region start
-            #                                         (len(inputSeq)-1) - step_size*3 - math.floor(len(inputSeq)/2) -  max_dist2center]]  #Reverse primer region length
+            #                                         math.floor(len(inputSeq)/2) - min_dist2center - 1 - step_size*3,                     #Forward primer region length
+            #                                         math.floor(len(inputSeq)/2) + min_dist2center,                                       #Reverse primer region start
+            #                                         (len(inputSeq)-1) - step_size*3 - math.floor(len(inputSeq)/2) -  min_dist2center]]  #Reverse primer region length
     }
     User_dict2 = {
-            'PRIMER_PRODUCT_SIZE_RANGE': [[max(prod_size_lower,2*max_dist2center), prod_size_upper]],  #product lower size can't be smaller than 2*max_dist2center
-            'PRIMER_NUM_RETURN': num_return + 7 # get 7 extra primer pairs
+            'PRIMER_PRODUCT_SIZE_RANGE': [[max(prod_size_lower,2*min_dist2center), prod_size_upper]],  #product lower size can't be smaller than 2*min_dist2center
+            'PRIMER_NUM_RETURN': num_primers_from_Primer3 # get 7 extra primer pairs
     }
 
     #keep a list of primers that failed specificity check, to avoid repeated work
@@ -82,7 +82,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
         User_dict1,
         {**thermo_dict, **User_dict2}) # these two dicts needs to be merged
     #check unintended products
-    dict_primers = check_unintended_products(dict_primers = dict_primers, len_input = prod_size_upper, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers)
+    dict_primers = check_unintended_products(dict_primers = dict_primers, len_input = prod_size_upper, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, fhlog = fhlog)
     nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
     #get primer number
@@ -91,12 +91,13 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
     # check if all primers fail because of unintended product
     if dict_primers['PRIMER_PAIR_NUM_RETURNED'] == len(dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"]) and not dict_primers["PRIMER_PAIR_NUM_RETURNED"] == 0:
         print("All primers failed because of having unintended PCR products, checking 100 candidate primers for their unintended PCR products ", flush=True)
+        fhlog.write("All primers failed because of having unintended PCR products, checking 100 candidate primers for their unintended PCR products \n")
         # get more primer candiates to check
-        User_dict2 = primer_num_eq_100(User_dict2)
+        User_dict2 = primer_num_eq_1000(User_dict2)
         # design primers
         dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
         # check unintended products
-        dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, cut_chr=chr, cut_coord=cut_coord, nonspecific_primers=nonspecific_primers )
+        dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, cut_chr=chr, cut_coord=cut_coord, nonspecific_primers=nonspecific_primers, fhlog = fhlog )
         nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
         # get primer number
@@ -111,7 +112,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
     if primer_pair_num < 1: #no primers found, start relaxation of criteria
         while (relaxation_count < 7 and primer_pair_num < 1):
             print(f"[Warning] No primers found, relaxing criteria, iteration={relaxation_count+1}", flush=True)
-
+            fhlog.write(f"[Warning] No primers found, relaxing criteria, iteration={relaxation_count + 1}\n")
             #alternate between two relaxations
             if relaxation_count % 2 == 0:
                 thermo_dict = relax_MIN_MAX_TM(thermo_dict) #relax thermodynamics
@@ -120,7 +121,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
 
             dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
             # check unintended products
-            dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers )
+            dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, fhlog = fhlog )
             nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
             # get primer number
@@ -129,13 +130,14 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
 
             #check if all primers fail because of unintended product
             if dict_primers['PRIMER_PAIR_NUM_RETURNED'] == len(dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"]) and not dict_primers["PRIMER_PAIR_NUM_RETURNED"]==0:
-                print("All primers failed because of having unintended PCR products, checking 100 candidate primers for their unintended PCR products ", flush=True)
+                print("All primers failed because of having unintended PCR products, checking 1000 candidate primers for their unintended PCR products ", flush=True)
+                fhlog.write("All primers failed because of having unintended PCR products, checking 1000 candidate primers for their unintended PCR products ")
                 #get more primer candiates to check
-                User_dict2 = primer_num_eq_100(User_dict2)
+                User_dict2 = primer_num_eq_1000(User_dict2)
                 #design primers
                 dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
                 # check unintended products
-                dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers )
+                dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, fhlog = fhlog )
                 nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
                 # get primer number
@@ -145,10 +147,12 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
 
     if primer_pair_num<1: #no primer found after a series relaxation, do a final relaxation of distance to center
         print(f"[Warning] No primers found, relaxing criteria, iteration={relaxation_count + 1}", flush=True)
-        User_dict1, User_dict2 = relax_dist2center(User_dict1 = User_dict1, User_dict2 = User_dict2, length_closer_tocenter = 20)
+        fhlog.write(f"[Warning] No primers found, relaxing criteria, iteration={relaxation_count + 1}\n")
+        length_closer_tocenter = int(min_dist2center * 0.8) # for 100bp, lengh_closer_tocenter = 20
+        User_dict1, User_dict2 = relax_dist2center(User_dict1 = User_dict1, User_dict2 = User_dict2, length_closer_tocenter = length_closer_tocenter)
         dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
         # check unintended products
-        dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers )
+        dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, fhlog = fhlog )
         nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
         # get primer number
@@ -163,17 +167,45 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
         return [None, relaxation_count, 0]
     else: #primer found:
         primer_list = []
-        for i in range(0, min([num_return, dict_primers['PRIMER_PAIR_NUM_RETURNED']])):
+        for i in range(0, dict_primers['PRIMER_PAIR_NUM_RETURNED']): # go through all primers
             if not i in dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"]: #avoid getting unspecific primers
-                tmpDict ={}
-                Rank = i+1
-                tmpDict["Rank"] = Rank
-                tmpDict["Lseq"] = dict_primers["PRIMER_LEFT_{}_SEQUENCE".format(i)]
-                tmpDict["Rseq"] = dict_primers["PRIMER_RIGHT_{}_SEQUENCE".format(i)]
-                tmpDict["Ltm"] = dict_primers["PRIMER_LEFT_{}_TM".format(i)]
-                tmpDict["Rtm"] = dict_primers["PRIMER_RIGHT_{}_TM".format(i)]
-                tmpDict["prodSize"] = dict_primers["PRIMER_PAIR_{}_PRODUCT_SIZE".format(i)]
-                primer_list.append(tmpDict)
+                if len(primer_list) == num_return: # return list if full, check if current primer is further away from the 1st primer, if so, replace the last primer
+                    new_L_st = dict_primers["PRIMER_LEFT_{}".format(i)][0]
+                    new_R_st = dict_primers["PRIMER_RIGHT_{}".format(i)][0]
+                    first_L_st = primer_list[0]["Lstart"]
+                    first_R_st = primer_list[0]["Rstart"]
+                    last_L_st = primer_list[len(primer_list)-1]["Lstart"]
+                    last_R_st = primer_list[len(primer_list)-1]["Rstart"]
+
+                    new_dist     = abs(new_L_st - first_L_st) + abs(new_R_st - first_R_st) # new dist between primer pairs
+                    current_dist = abs(last_L_st - first_L_st) + abs(last_R_st - first_R_st) # current dist between primer pairs
+
+                    if new_dist > current_dist: # replace the last primer pair with new one if the new dist is larger
+                        tmpDict = {}
+                        Rank = i + 1
+                        tmpDict["Rank"] = Rank
+                        tmpDict["Lseq"] = dict_primers["PRIMER_LEFT_{}_SEQUENCE".format(i)]
+                        tmpDict["Rseq"] = dict_primers["PRIMER_RIGHT_{}_SEQUENCE".format(i)]
+                        tmpDict["Ltm"] = dict_primers["PRIMER_LEFT_{}_TM".format(i)]
+                        tmpDict["Rtm"] = dict_primers["PRIMER_RIGHT_{}_TM".format(i)]
+                        tmpDict["prodSize"] = dict_primers["PRIMER_PAIR_{}_PRODUCT_SIZE".format(i)]
+                        tmpDict["Lstart"] = dict_primers["PRIMER_LEFT_{}".format(i)][0]
+                        tmpDict["Rstart"] = dict_primers["PRIMER_RIGHT_{}".format(i)][0]
+
+                        primer_list[len(primer_list) - 1] = tmpDict # replace the last primer pair with current one
+
+                else: # add primer to return list
+                    tmpDict ={}
+                    Rank = i+1
+                    tmpDict["Rank"] = Rank
+                    tmpDict["Lseq"] = dict_primers["PRIMER_LEFT_{}_SEQUENCE".format(i)]
+                    tmpDict["Rseq"] = dict_primers["PRIMER_RIGHT_{}_SEQUENCE".format(i)]
+                    tmpDict["Ltm"] = dict_primers["PRIMER_LEFT_{}_TM".format(i)]
+                    tmpDict["Rtm"] = dict_primers["PRIMER_RIGHT_{}_TM".format(i)]
+                    tmpDict["prodSize"] = dict_primers["PRIMER_PAIR_{}_PRODUCT_SIZE".format(i)]
+                    tmpDict["Lstart"] = dict_primers["PRIMER_LEFT_{}".format(i)][0]
+                    tmpDict["Rstart"] = dict_primers["PRIMER_RIGHT_{}".format(i)][0]
+                    primer_list.append(tmpDict)
         good_primer_num = dict_primers['PRIMER_PAIR_NUM_RETURNED'] - len(dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"])
         return [primer_list, relaxation_count, good_primer_num]
 
@@ -237,8 +269,8 @@ def relax_dist2center(User_dict1,User_dict2, length_closer_tocenter):
 
     return [User_dict1, User_dict2]
 
-def primer_num_eq_100(User_dict2):
-    User_dict2["PRIMER_NUM_RETURN"] = 100
+def primer_num_eq_1000(User_dict2):
+    User_dict2["PRIMER_NUM_RETURN"] = 1000
     return User_dict2
 
 def reset_primer_num(User_dict2,num_return):

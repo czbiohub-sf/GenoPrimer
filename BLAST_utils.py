@@ -12,12 +12,12 @@ def check_blastDB_human():
     exe_suffix = ""
     thisSystem = platform.system()
     if  thisSystem == "Windows":
-        BLAST_bin = "ncbi-blast-2.12.0+-x64-win64/bin/"
+        BLAST_bin = "bin/ncbi-blast-2.12.0+-x64-win64/bin/"
         exe_suffix = ".exe"
     elif thisSystem == "Darwin":
-        BLAST_bin = "ncbi-blast-2.12.0+-x64-macosx/bin/"
+        BLAST_bin = "bin/ncbi-blast-2.12.0+-x64-macosx/bin/"
     elif thisSystem == "Linux":
-        BLAST_bin = "ncbi-blast-2.12.0+-x64-linux/bin/"
+        BLAST_bin = "bin/ncbi-blast-2.12.0+-x64-linux/bin/"
     else:
         sys.exit(f"Unknown operating system {thisSystem}")
 

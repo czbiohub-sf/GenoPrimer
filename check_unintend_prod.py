@@ -3,7 +3,7 @@ from subprocess import Popen
 import os
 import pandas as pd
 
-def check_unintended_products(dict_primers, len_input, cut_chr , cut_coord, nonspecific_primers):
+def check_unintended_products(dict_primers, len_input, cut_chr , cut_coord, nonspecific_primers,fhlog):
     """
     checks unintended_products and remove primers having unintended products
     :param dict_primers:
@@ -12,7 +12,7 @@ def check_unintended_products(dict_primers, len_input, cut_chr , cut_coord, nons
     :return: dict_primers(updated) #add a key PRIMER_PAIR_NUM_RETURNED_SPECIFIC
     """
 
-    dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"] = []
+    dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"] = set()
 
     numThread2use = max([1, os.cpu_count()-2]) # for BLAST, use all CPUs except 2
 
@@ -21,10 +21,11 @@ def check_unintended_products(dict_primers, len_input, cut_chr , cut_coord, nons
 
     max_pcr_prod_size = 6000
     print(f"Listing all possible PCR products < {max_pcr_prod_size} bp", flush=True)
+    fhlog.write(f"Listing all possible PCR products < {max_pcr_prod_size} bp\n")
 
     dict_primer_len = {} #used to track the length of the primers, for 3' tracking purposes
     #create primer.fa
-    empty_file_flag = 1
+    empty_file_flag = 1 # this value =1 if primer.fa is empty
     tmp_fa = f"chr{cut_chr}_{cut_coord}_primer.fa"
     with open(tmp_fa, "w") as wfh:
         for i in range(0, dict_primers["PRIMER_PAIR_NUM_RETURNED"]):
@@ -38,12 +39,16 @@ def check_unintended_products(dict_primers, len_input, cut_chr , cut_coord, nons
                 empty_file_flag = 0
             else:
                 print(f"skipping {i}_F {i}_R due to nonspecific product detected in previous iteration(s)")
-                dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"].append(i)
+                fhlog.write(f"skipping {i}_F {i}_R due to nonspecific product detected in previous iteration(s)\n")
+                dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"].add(i)
 
     if empty_file_flag==0:
         #blast
         # check blastDB (human) and also return BLAST bin directory
         BLAST_bin, exe_suffix, BLAST_db_path = check_blastDB_human()
+        # print(BLAST_bin)
+        # print(exe_suffix)
+        # print(BLAST_db_path)
         # specify BLAST db and query
         query = tmp_fa
         # start BLAST
@@ -63,13 +68,13 @@ def check_unintended_products(dict_primers, len_input, cut_chr , cut_coord, nons
         ## go through all primer pairs
         for idx in primer_idx:
             df_1pair = df[(df["qseqid"] == idx + "_F") | (df["qseqid"] == idx + "_R")]
-            dict_primers = find_primer_parings(df_1pair=df_1pair,dict_primers=dict_primers, max_pcr_prod_size = max_pcr_prod_size, dict_primer_len=dict_primer_len, idx= idx, cut_chr =cut_chr, cut_coord = cut_coord )
+            dict_primers = find_primer_parings(df_1pair=df_1pair,dict_primers=dict_primers, max_pcr_prod_size = max_pcr_prod_size, dict_primer_len=dict_primer_len, idx= idx, cut_chr =cut_chr, cut_coord = cut_coord, fhlog = fhlog)
 
         os.remove(f"{query}.out")
     return dict_primers
 
 
-def find_primer_parings(df_1pair, dict_primers, max_pcr_prod_size, dict_primer_len, idx,cut_chr, cut_coord):
+def find_primer_parings(df_1pair, dict_primers, max_pcr_prod_size, dict_primer_len, idx,cut_chr, cut_coord, fhlog):
     ## go through by each chr
     for current_chr in df_1pair["sseqid"].unique():
         df_1pair_1chr = df_1pair[df_1pair["sseqid"] == current_chr]
@@ -78,6 +83,7 @@ def find_primer_parings(df_1pair, dict_primers, max_pcr_prod_size, dict_primer_l
         R_len = dict_primer_len[f"{idx}_R"]
         df_1pair_1chr = df_1pair_1chr[((df_1pair_1chr["qseqid"] == f"{idx}_F") & (df_1pair_1chr["qend"] == F_len)) |
                                       ((df_1pair_1chr["qseqid"] == f"{idx}_R") & (df_1pair_1chr["qend"] == R_len))]
+        current_pair_intended_prod_count = 0 #keep track of the number of intented targets for each primer pair
 
         ##go through all possible combinations that may produce PCR products
         combinations = []
@@ -108,11 +114,16 @@ def find_primer_parings(df_1pair, dict_primers, max_pcr_prod_size, dict_primer_l
                                     if str(current_chr) == str(cut_chr) and min_coord < cut_coord < max_coord:  # intended product
                                         # pass
                                         print(f"{row_i['qseqid']} chr={row_i['sseqid']} {row_i['sstart']}-{row_i['send']} {row_j['qseqid']}  chr={row_j['sseqid']} {row_j['sstart']}-{row_j['send']} product_size = {dist} (intended PCR product)",flush=True)
+                                        fhlog.write(f"{row_i['qseqid']} chr={row_i['sseqid']} {row_i['sstart']}-{row_i['send']} {row_j['qseqid']}  chr={row_j['sseqid']} {row_j['sstart']}-{row_j['send']} product_size = {dist} (intended PCR product)\n")
+                                        current_pair_intended_prod_count += 1
+                                        if current_pair_intended_prod_count > 1: #flag primer pair unspecific if more than one intended PCR product is found
+                                            dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"].add(idx)
                                     else:  # flag primer for having unintened product
                                         # mark primers with unintended products
-                                        dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"].append(idx)
+                                        dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"].add(idx)
                                         print(f"{row_i['qseqid']} chr={row_i['sseqid']} {row_i['sstart']}-{row_i['send']} {row_j['qseqid']}  chr={row_j['sseqid']} {row_j['sstart']}-{row_j['send']} product_size = {dist} (*unintended* PCR product) Skipping listing other PCR products for this primer",flush=True)
-                                        return dict_primers
+                                        fhlog.write(f"{row_i['qseqid']} chr={row_i['sseqid']} {row_i['sstart']}-{row_i['send']} {row_j['qseqid']}  chr={row_j['sseqid']} {row_j['sstart']}-{row_j['send']} product_size = {dist} (*unintended* PCR product) Skipping listing other PCR products for this primer\n")
+                                        return dict_primers # this ends the function, thus stops checking this primer any further
     return dict_primers
 
 
