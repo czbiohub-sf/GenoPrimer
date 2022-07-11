@@ -20,7 +20,7 @@ Automated primer design for genotyping CRISPR edited cells via amplicon sequenci
 
 ### [Helper script]
 If you only have gRNAs but not their cutsites coordinates in the genome,  
-there is a helper script "" that can obtain cutsite coordinates by mapping gRNA to the genome
+there is a helper script "get_gRNA_cutsite.py" that can obtain cutsite coordinates by mapping gRNA to the genome
 more details coming soon...
 
 ## Outputs:
