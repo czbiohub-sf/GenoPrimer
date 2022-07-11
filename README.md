@@ -17,7 +17,12 @@ Automated primer design for genotyping CRISPR edited cells via amplicon sequenci
   - Ensemble_ref (The genome/build version, e.g., GRCh38)  
   - Ensemble_chr (e.g. 2)  
   - gRNACut_in_chr (Center position of the amplicon, in the form of coordinates on the chromosome, e.g. 45389323)   
-    
+
+### [Helper script]
+If you only have gRNAs but not their cutsites coordinates in the genome,  
+there is a helper script "" that can obtain cutsite coordinates by mapping gRNA to the genome
+more details coming soon...
+
 ## Outputs:
 - A csv file with the input information + new columns: 
   -  Up to three pairs of primers for each gene/row, including Tm and expected product size.
