@@ -42,16 +42,7 @@ Go the repository directory, switch he branch if running branch other than maste
 cd GenoPrimer
 git checkout <branch you'd like to run>
 ```
-Download the genome files 
-```
-cd BLAST_databases
-wget http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
-gunzip Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
-```
-make a Blast database, please note: [system-specific selections]
-```
-../bin/ncbi-blast-2.12.0+-x64-[linux/macosx/win64]/makeblastdb[.exe] -dbtype nucl -in Homo_sapiens.GRCh38.dna.primary_assembly.fa -out Homo_sapiens.GRCh38.dna.primary_assembly.fa.[linux/macosx/win64]
-```
+
 Create conda environment
 ```
 conda env create -f environment.yml
