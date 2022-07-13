@@ -8,6 +8,7 @@ Automated primer design for genotyping CRISPR edited cells via amplicon sequenci
 - Use Blast to check unintended PCR products 
   - Autodetects system and use matching Blast executable: Linux, MacOS, Windows
   - Autodetects CPU number and multi-threads Blast search ( saves 2 CPUs for the user)
+- Automatically downloads and uses the human genome by default
 
 ## Inputs
 
@@ -53,8 +54,9 @@ You are ready to run GenoPrimer
 conda activate GenoPrimer
 python GenoPrimer.py --csv test_data/test.csv --type "MiSeq"
 ```
-During first-time run, the program will download the human genome and generate Blast databases
-
+Notes:  
+(1) During first-time run, the program will download the human genome and generate Blast databases  
+(2) In some OS, It may be required to grant permission to Blast excutables 
 
 
 
