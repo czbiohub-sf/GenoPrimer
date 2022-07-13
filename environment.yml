@@ -42,8 +42,7 @@ dependencies:
   - six=1.15.0
   - sqlite=3.33.0
   - urllib3=1.25.11
-  - vc=14.1=h0510ff6_4
-  - vs2015_runtime=14.16.27012
+  - vc=14.1
   - wheel=0.35.1
   - zlib=1.2.11
   - pip:
