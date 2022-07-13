@@ -33,7 +33,7 @@ more details coming soon...
 
 &nbsp;
 ## Usage:
-close the repository
+clone the repository
 ```
 git clone https://github.com/czbiohub/GenoPrimer.git
 ```
@@ -59,7 +59,7 @@ conda env create -f environment.yml
 
 You are ready to run GenoPrimer
 ```
-cond activate GenoPrimer
+conda activate GenoPrimer
 python GenoPrimer.py --csv test_data/test.csv --type "MiSeq"
 ```
 
