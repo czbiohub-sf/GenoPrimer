@@ -52,7 +52,7 @@ def check_unintended_products(dict_primers, len_input, cut_chr , cut_coord, nons
         # specify BLAST db and query
         query = tmp_fa
         # start BLAST
-        cmd = [f"{BLAST_bin}blastn{exe_suffix}", "-task", "blastn-short", "-query", f"{query}", "-db", f"{BLAST_db_path}", "-num_threads", f"{numThread2use}", "-perc_identity", "75", "-outfmt", "6 qseqid sseqid qstart qend sstart send pident mismatch", "-out", f"{query}.out"]
+        cmd = [f"{BLAST_bin}blastn{exe_suffix}", "-task", "blastn-short", "-query", f"{query}", "-db", f"{BLAST_db_path}", "-evalue", "3", "-num_threads", f"{numThread2use}", "-perc_identity", "75", "-outfmt", "6 qseqid sseqid qstart qend sstart send pident mismatch", "-out", f"{query}.out"]
         p = Popen(cmd, universal_newlines=True)
         p.communicate()  # now wait for the process to finish
         os.remove(tmp_fa)

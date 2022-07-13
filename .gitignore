@@ -8,6 +8,7 @@
 __pycache__/utils.cpython-38.pyc
 __pycache__/utils.cpython-310.pyc
 __pycache__/
+testing/
 .idea/
 production_data/
 test_data/fromKibeom.gRNAout.csv
@@ -23,3 +24,5 @@ test_data/fromKibeom.primers.csv
 test_data/fromKibeom.gRNAout.primer.csv
 test_data/hard_cutsites.csv
 test_data/fromKibeom.gRNAout.primer.csv
+test_data/test.csv.log.txt
+test_data/test.primer.csv
