@@ -7,44 +7,44 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - biopython=1.78=py38he774522_0
+  - biopython=1.78
   - blas=1.0=mkl
-  - brotlipy=0.7.0=py38he774522_1000
+  - brotlipy=0.7.0
   - ca-certificates=2020.10.14=0
-  - certifi=2020.6.20=py38_0
-  - cffi=1.14.3=py38h7a1dbc1_0
-  - chardet=3.0.4=py38_1003
-  - cryptography=3.1.1=py38h7a1dbc1_0
-  - cython=0.29.21=py38ha925a31_0
-  - et_xmlfile=1.0.1=py_1001
-  - idna=2.10=py_0
-  - intel-openmp=2021.4.0=haa95532_3556
-  - jdcal=1.4.1=py_0
-  - mkl=2021.4.0=haa95532_640
-  - mkl-service=2.4.0=py38h2bbff1b_0
-  - mkl_fft=1.3.1=py38h277e83a_0
-  - mkl_random=1.2.2=py38hf11a4ad_0
-  - numpy=1.21.2=py38hfca59bb_0
-  - numpy-base=1.21.2=py38h0829f74_0
-  - openpyxl=3.0.5=py_0
-  - openssl=1.1.1h=he774522_0
-  - pandas=1.1.3=py38ha925a31_0
-  - pip=20.2.4=py38_0
-  - pycparser=2.20=py_2
-  - pyopenssl=19.1.0=py_1
-  - pysocks=1.7.1=py38_0
-  - python=3.8.5=h5fd99cc_1
-  - python-dateutil=2.8.1=py_0
-  - pytz=2020.1=py_0
-  - regex=2020.10.15=py38he774522_0
-  - requests=2.24.0=py_0
-  - setuptools=50.3.0=py38h9490d1a_1
-  - six=1.15.0=py_0
-  - sqlite=3.33.0=h2a8f88b_0
-  - urllib3=1.25.11=py_0
+  - certifi=2020.6.20
+  - cffi=1.14.3
+  - chardet=3.0.4
+  - cryptography=3.1.1
+  - cython=0.29.21
+  - et_xmlfile=1.0.1
+  - idna=2.10
+  - intel-openmp=2021.4.0
+  - jdcal=1.4.1
+  - mkl=2021.4.0
+  - mkl-service=2.4.0
+  - mkl_fft=1.3.1
+  - mkl_random=1.2.2
+  - numpy=1.21.2
+  - numpy-base=1.21.2
+  - openpyxl=3.0.5
+  - openssl=1.1.1h
+  - pandas=1.1.3
+  - pip=20.2.4
+  - pycparser=2.20
+  - pyopenssl=19.1.0
+  - pysocks=1.7.1
+  - python=3.8.5
+  - python-dateutil=2.8.1
+  - pytz=2020.1
+  - regex=2020.10.15
+  - requests=2.24.0
+  - setuptools=50.3.0
+  - six=1.15.0
+  - sqlite=3.33.0
+  - urllib3=1.25.11
   - vc=14.1=h0510ff6_4
-  - vs2015_runtime=14.16.27012=hf0eaf9b_3
-  - wheel=0.35.1=py_0
-  - zlib=1.2.11=vc14h1cdd9ab_1
+  - vs2015_runtime=14.16.27012
+  - wheel=0.35.1
+  - zlib=1.2.11
   - pip:
     - primer3-py==0.6.1
