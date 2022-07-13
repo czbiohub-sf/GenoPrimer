@@ -21,7 +21,7 @@ Automated primer design for genotyping CRISPR edited cells via amplicon sequenci
 ### [Helper script]
 If you only have gRNA sequences but not their cutsites coordinates in the genome or the Ensemble IDs,
 there is a helper script "get_gRNA_cutsite.py" that can obtain cutsite coordinates by mapping gRNA to the genome
-more details coming soon...
+See the usage section for more details
 
 ## Outputs:
 - A csv file with the input information + new columns: 
@@ -61,5 +61,11 @@ Notes:
 chmod a+xX * bin/ncbi-blast-2.12.0+-x64-linux/bin/
 ```
 
+### Helper script
+input:
+
+- A csv file containing minimumlly two columns (with the exact names):
+  - gene_name (The transcript ID, e.g., ENSG00000068784 or SRBD1)  
+  - gRNA_protospacer (The sequence of the protospacer, not including the PAM, e.g., GGGCTCTCCCTGGGCGGCCA)  
 
 
