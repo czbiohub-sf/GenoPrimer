@@ -56,8 +56,10 @@ python GenoPrimer.py --csv test_data/test.csv --type "MiSeq"
 ```
 Notes:  
 (1) During first-time run, the program will download the human genome and generate Blast databases  
-(2) In some OS, It may be required to grant permission to Blast excutables 
-
+(2) In some OS, It may be required to grant permission to Blast excutables, for example:
+```
+chmod a+xX * bin/ncbi-blast-2.12.0+-x64-linux/bin/
+```
 
 
 
