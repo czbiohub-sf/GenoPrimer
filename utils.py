@@ -93,7 +93,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
         print("All primers failed because of having unintended PCR products, checking 100 candidate primers for their unintended PCR products ", flush=True)
         fhlog.write("All primers failed because of having unintended PCR products, checking 100 candidate primers for their unintended PCR products \n")
         # get more primer candiates to check
-        User_dict2 = primer_num_eq_800(User_dict2)
+        User_dict2 = primer_num_eq_1000(User_dict2)
         # design primers
         dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
         # check unintended products
@@ -133,7 +133,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
                 print("All primers failed because of having unintended PCR products, checking 1000 candidate primers for their unintended PCR products ", flush=True)
                 fhlog.write("All primers failed because of having unintended PCR products, checking 1000 candidate primers for their unintended PCR products ")
                 #get more primer candiates to check
-                User_dict2 = primer_num_eq_800(User_dict2)
+                User_dict2 = primer_num_eq_1000(User_dict2)
                 #design primers
                 dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
                 # check unintended products
@@ -269,8 +269,8 @@ def relax_dist2center(User_dict1,User_dict2, length_closer_tocenter):
 
     return [User_dict1, User_dict2]
 
-def primer_num_eq_800(User_dict2):
-    User_dict2["PRIMER_NUM_RETURN"] = 800
+def primer_num_eq_1000(User_dict2):
+    User_dict2["PRIMER_NUM_RETURN"] = 1000
     return User_dict2
 
 def reset_primer_num(User_dict2,num_return):
