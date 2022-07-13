@@ -33,14 +33,39 @@ more details coming soon...
 
 &nbsp;
 ## Usage:
+close the repository
+```
+git clone https://github.com/czbiohub/GenoPrimer.git
+```
+Go the repository directory, switch he branch if running branch other than master:
+```
+cd GenoPrimer
+git checkout <branch you'd like to run>
+```
+Download the genome files 
+```
+cd BLAST_databases
+wget http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+gunzip Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+```
+make a Blast database, [make system-specific selections in the square bracket]
+```
+../bin/ncbi-blast-2.12.0+-x64-[linux/macosx/win64]/makeblastdb[.exe] -dbtype nucl -in Homo_sapiens.GRCh38.dna.primary_assembly.fa -out Homo_sapiens.GRCh38.dna.primary_assembly.fa.[linux/macosx/win64]
+```
+Create conda environment
+```
+conda env create -f environment.yml
+cond activate GenoPrimer
+```
+
+
+```
+You are ready to run GenoPrimer
 ```
 python GenoPrimer.py --csv test_data/test.csv --type "MiSeq"
 ```
 
 
-## Dependencies
-Python 3.5-3.8 (as required by primer3-py)  
-See "requirements.txt" for a complete list of dependencies
 
 
 
