@@ -12,14 +12,13 @@ Automated primer design for genotyping CRISPR edited cells via amplicon sequenci
 ## Inputs
 
 - A csv file containing minimumlly four columns (with the exact names) describing each gene/primer design:
-  (these)
   - Ensemble_ID (The transcript ID, e.g., ENST00000263736)  
   - Ensemble_ref (The genome/build version, e.g., GRCh38)  
   - Ensemble_chr (e.g. 2)  
   - gRNACut_in_chr (Center position of the amplicon, in the form of coordinates on the chromosome, e.g. 45389323)   
 
 ### [Helper script]
-If you only have gRNAs but not their cutsites coordinates in the genome,  
+If you only have gRNA sequences but not their cutsites coordinates in the genome or the Ensemble IDs,
 there is a helper script "get_gRNA_cutsite.py" that can obtain cutsite coordinates by mapping gRNA to the genome
 more details coming soon...
 
