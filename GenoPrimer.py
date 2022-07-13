@@ -91,10 +91,6 @@ def main():
                     amp_en = str(int(int(gRNACut_in_chr) + int(amp_len)/2) + step_size*3 ) # buffer zone = step_size*3 bp
                     chr_region = get_ensembl_sequence(chromosome = Ensemble_chr, region_left = amp_st, region_right = amp_en, species = "human",expand=0)
 
-                    #get left/right 10kb for off target analysis
-                    chr_region_left10kb = get_ensembl_sequence(chromosome = Ensemble_chr, region_left = str(int(amp_st)-10000), region_right = amp_st, species = "human",expand=0)
-                    chr_region_right10kb = get_ensembl_sequence(chromosome = Ensemble_chr, region_left = amp_en, region_right = str(int(amp_en)+10000), species = "human",expand=0)
-
                     #design primer
                     primerlist, relaxation_count, good_primer_num = get_primers(inputSeq = str(chr_region),
                                              prod_size_lower=prod_size_lower,
@@ -123,6 +119,12 @@ def main():
 
                     cutsite_count += 1
                     gc.collect()
+
+                    if cutsite_count%10==0 and cutsite_count!=0:
+                        endtime = datetime.datetime.now()
+                        elapsed_sec = endtime - starttime
+                        elapsed_min = elapsed_sec.seconds / 60
+                        log.info(f"elapsed {elapsed_min:.2f} min, processed {cutsite_count} site(s), {cutsite_count_noprimer} cutcite(s) failed to yield primers")
 
                 endtime = datetime.datetime.now()
                 elapsed_sec = endtime - starttime

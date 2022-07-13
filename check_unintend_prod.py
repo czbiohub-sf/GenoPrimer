@@ -20,7 +20,7 @@ def check_unintended_products(dict_primers, len_input, cut_chr , cut_coord, nons
         return dict_primers
 
     max_pcr_prod_size = 6000
-    print(f"Listing all possible PCR products < {max_pcr_prod_size} bp", flush=True)
+    #print(f"Listing all possible PCR products < {max_pcr_prod_size} bp", flush=True)
     fhlog.write(f"Listing all possible PCR products < {max_pcr_prod_size} bp\n")
 
     dict_primer_len = {} #used to track the length of the primers, for 3' tracking purposes
@@ -38,7 +38,7 @@ def check_unintended_products(dict_primers, len_input, cut_chr , cut_coord, nons
                 dict_primer_len[f"{i}_R"] = len(Rseq)
                 empty_file_flag = 0
             else:
-                print(f"skipping {i}_F {i}_R due to nonspecific product detected in previous iteration(s)")
+                #print(f"skipping {i}_F {i}_R due to nonspecific product detected in previous iteration(s)")
                 fhlog.write(f"skipping {i}_F {i}_R due to nonspecific product detected in previous iteration(s)\n")
                 dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"].add(i)
 
@@ -113,7 +113,7 @@ def find_primer_parings(df_1pair, dict_primers, max_pcr_prod_size, dict_primer_l
                                     # check if this product is intended
                                     if str(current_chr) == str(cut_chr) and min_coord < cut_coord < max_coord:  # intended product
                                         # pass
-                                        print(f"{row_i['qseqid']} chr={row_i['sseqid']} {row_i['sstart']}-{row_i['send']} {row_j['qseqid']}  chr={row_j['sseqid']} {row_j['sstart']}-{row_j['send']} product_size = {dist} (intended PCR product)",flush=True)
+                                        #print(f"{row_i['qseqid']} chr={row_i['sseqid']} {row_i['sstart']}-{row_i['send']} {row_j['qseqid']}  chr={row_j['sseqid']} {row_j['sstart']}-{row_j['send']} product_size = {dist} (intended PCR product)",flush=True)
                                         fhlog.write(f"{row_i['qseqid']} chr={row_i['sseqid']} {row_i['sstart']}-{row_i['send']} {row_j['qseqid']}  chr={row_j['sseqid']} {row_j['sstart']}-{row_j['send']} product_size = {dist} (intended PCR product)\n")
                                         current_pair_intended_prod_count += 1
                                         if current_pair_intended_prod_count > 1: #flag primer pair unspecific if more than one intended PCR product is found
@@ -121,7 +121,7 @@ def find_primer_parings(df_1pair, dict_primers, max_pcr_prod_size, dict_primer_l
                                     else:  # flag primer for having unintened product
                                         # mark primers with unintended products
                                         dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"].add(idx)
-                                        print(f"{row_i['qseqid']} chr={row_i['sseqid']} {row_i['sstart']}-{row_i['send']} {row_j['qseqid']}  chr={row_j['sseqid']} {row_j['sstart']}-{row_j['send']} product_size = {dist} (*unintended* PCR product) Skipping listing other PCR products for this primer",flush=True)
+                                        #print(f"{row_i['qseqid']} chr={row_i['sseqid']} {row_i['sstart']}-{row_i['send']} {row_j['qseqid']}  chr={row_j['sseqid']} {row_j['sstart']}-{row_j['send']} product_size = {dist} (*unintended* PCR product) Skipping listing other PCR products for this primer",flush=True)
                                         fhlog.write(f"{row_i['qseqid']} chr={row_i['sseqid']} {row_i['sstart']}-{row_i['send']} {row_j['qseqid']}  chr={row_j['sseqid']} {row_j['sstart']}-{row_j['send']} product_size = {dist} (*unintended* PCR product) Skipping listing other PCR products for this primer\n")
                                         return dict_primers # this ends the function, thus stops checking this primer any further
     return dict_primers
