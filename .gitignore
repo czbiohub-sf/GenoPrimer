@@ -9,7 +9,6 @@ __pycache__/utils.cpython-38.pyc
 __pycache__/utils.cpython-310.pyc
 __pycache__/
 .idea/
-BLAST_databases/
 production_data/
 test_data/fromKibeom.gRNAout.csv
 test_data/fromKibeom.gRNAout.primer.csv
