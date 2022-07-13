@@ -62,10 +62,13 @@ chmod a+xX * bin/ncbi-blast-2.12.0+-x64-linux/bin/
 ```
 
 ### Helper script
-input:
-
+Input:
 - A csv file containing minimumlly two columns (with the exact names):
   - gene_name (The transcript ID, e.g., ENSG00000068784 or SRBD1)  
   - gRNA_protospacer (The sequence of the protospacer, not including the PAM, e.g., GGGCTCTCCCTGGGCGGCCA)  
+Usage:
+```
+python get_gRNA_cutsite.py --csv gRNA.csv
+```
 
 
