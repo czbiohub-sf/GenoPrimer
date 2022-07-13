@@ -27,7 +27,7 @@ more details coming soon...
   -  Up to three pairs of primers for each gene/row, including Tm and expected product size.
   -  A numeric number indicating how many rounds of criteria relaxation before yielding primers (column "Rounds_relax_of_primer_criteria")
 
-## Workflow (gene/primer design) 
+## Automated workflow (for one site) 
 <img width="1027" alt="image" src="https://user-images.githubusercontent.com/4129442/154752321-14e3f6c9-0a4c-435a-8c46-99d1a0893356.png">
 
 
