@@ -61,8 +61,9 @@ def main():
 
         df = pd.read_csv(os.path.join(config['csv']))
 
-        if not "Ensemble_ID" in df.columns:
-            log.error(f"The csv file does not contain a column named: Ensemble_ID")
+        must_have_cols = ["gene_ID_or_name", "ref", "chr", "site"]
+        if not all(col in df.columns for col in must_have_col):
+            log.error(f"The csv file does not contain all the required columns: gene_ID_or_name, ref, chr, site")
             sys.exit("Please fix the error(s) above and rerun the script")
 
         #read input csv file
@@ -78,13 +79,13 @@ def main():
             with open(f"{config['csv']}.log.txt", "w") as fhlog:
                 #go over each cutsite
                 for index, row in df.iterrows():
-                    Ensemble_ID = row["Ensemble_ID"]
-                    Ensemble_spp = row["Ensemble_ref"]
-                    Ensemble_chr = row["Ensemble_chr"]
-                    gRNACut_in_chr = row["gRNACut_in_chr"]
+                    geneID = row["gene_ID_or_name"]
+                    ref = row["ref"]
+                    Chr = row["chr"]
+                    site = row["site"]
 
-                    log.info(f"({index+1}/{len(df.index)}) Processing cutsite: EnsembleID:{Ensemble_ID}, Genome:{Ensemble_spp}, Chr:{Ensemble_chr}, cut_coordinate: {gRNACut_in_chr}")
-                    fhlog.write(f"({index+1}/{len(df.index)}) Processing cutsite: EnsembleID:{Ensemble_ID}, Genome:{Ensemble_spp}, Chr:{Ensemble_chr}, cut_coordinate: {gRNACut_in_chr}\n")
+                    log.info(f"({index+1}/{len(df.index)}) Processing cutsite: gene:{geneID}, Genome:{ref}, Chr:{Chr}, cut_coordinate: {site}")
+                    fhlog.write(f"({index+1}/{len(df.index)}) Processing cutsite: gene:{geneID}, Genome:{ref}, Chr:{Chr}, cut_coordinate: {site}\n")
 
                     #get sequence from chromosome, get 150bp extra on each side, will progressively include in considered zone if no primers were found
                     amp_st = str(int(int(gRNACut_in_chr) - int(amp_len)/2) - step_size*3 ) # buffer zone = step_size*3 bp
