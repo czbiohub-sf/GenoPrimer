@@ -78,6 +78,12 @@ def main():
                     outcsv.write(",".join(csvrow) + "," + str(gRNA_perf_match_df.iloc[0]["sseqid"]) + "," + str(cutsite_in_chr))
                     outcsv.write("\n")
                 cutsite_count+=1
+
+                if cutsite_count%50==0 and cutsite_count!=0:
+                    endtime = datetime.datetime.now()
+                    elapsed_sec = endtime - starttime
+                    elapsed_min = elapsed_sec.seconds / 60
+                    log.info(f"elapsed {elapsed_min:.2f} min, processed {cutsite_count} site(s)")
         endtime = datetime.datetime.now()
         elapsed_sec = endtime - starttime
         elapsed_min = elapsed_sec.seconds / 60

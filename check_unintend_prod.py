@@ -3,7 +3,7 @@ from subprocess import Popen
 import os
 import pandas as pd
 
-def check_unintended_products(dict_primers, len_input, cut_chr , cut_coord, nonspecific_primers,fhlog):
+def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord, nonspecific_primers,fhlog):
     """
     checks unintended_products and remove primers having unintended products
     :param dict_primers:
@@ -45,14 +45,14 @@ def check_unintended_products(dict_primers, len_input, cut_chr , cut_coord, nons
     if empty_file_flag==0:
         #blast
         # check blastDB (human) and also return BLAST bin directory
-        BLAST_bin, exe_suffix, BLAST_db_path = check_blastDB_human()
+        BLAST_bin, exe_suffix, BLAST_db_path = check_blastDB_human(ref)
         # print(BLAST_bin)
         # print(exe_suffix)
         # print(BLAST_db_path)
         # specify BLAST db and query
         query = tmp_fa
         # start BLAST
-        cmd = [f"{BLAST_bin}blastn{exe_suffix}", "-task", "blastn-short", "-query", f"{query}", "-db", f"{BLAST_db_path}", "-evalue", "3", "-num_threads", f"{numThread2use}", "-perc_identity", "75", "-outfmt", "6 qseqid sseqid qstart qend sstart send pident mismatch", "-out", f"{query}.out"]
+        cmd = [f"{BLAST_bin}blastn{exe_suffix}", "-task", "blastn-short", "-query", f"{query}", "-db", f"{BLAST_db_path}", "-max_hsps", "2000", "-evalue", "3", "-num_threads", f"{numThread2use}", "-perc_identity", "75", "-outfmt", "6 qseqid sseqid qstart qend sstart send pident mismatch", "-out", f"{query}.out"]
         p = Popen(cmd, universal_newlines=True)
         p.communicate()  # now wait for the process to finish
         os.remove(tmp_fa)

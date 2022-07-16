@@ -8,6 +8,7 @@ import datetime
 from utils import *
 import gc
 import logging
+import traceback
 
 class MyParser(argparse.ArgumentParser):
     def error(self, message):
@@ -19,6 +20,7 @@ def parse_args():
     parser= MyParser(description='This script designs primers around the gRNA cut site')
     parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', metavar='')
     parser.add_argument('--type', default="MiSeq", type=str, help='MiSeq:300-350bp, PacBio: 3kb', metavar='')
+    #parser.add_argument('--genome', default="ensembl_GRCh38_latest", type=str, help='other accepted values are: NCBI_refseq_GRCh38.p14', metavar='')
     config = parser.parse_args()
     if len(sys.argv)==1: # print help message if arguments are not valid
         parser.print_help()
@@ -27,7 +29,7 @@ def parse_args():
 
 config = vars(parse_args())
 num_primer_return = 3
-num_primers_from_Primer3 = 397 + num_primer_return
+num_primers_from_Primer3 = 297 + num_primer_return
 
 #default settings for MiSeq
 amp_len = 300
@@ -61,9 +63,9 @@ def main():
 
         df = pd.read_csv(os.path.join(config['csv']))
 
-        must_have_cols = ["gene_ID_or_name", "ref", "chr", "site"]
-        if not all(col in df.columns for col in must_have_col):
-            log.error(f"The csv file does not contain all the required columns: gene_ID_or_name, ref, chr, site")
+        must_have_cols = ["ref", "chr", "coordinate"]
+        if not all(col in df.columns for col in must_have_cols):
+            log.error(f"The csv file does not contain all the required columns: ref, chr, coordinate")
             sys.exit("Please fix the error(s) above and rerun the script")
 
         #read input csv file
@@ -79,18 +81,17 @@ def main():
             with open(f"{config['csv']}.log.txt", "w") as fhlog:
                 #go over each cutsite
                 for index, row in df.iterrows():
-                    geneID = row["gene_ID_or_name"]
                     ref = row["ref"]
                     Chr = row["chr"]
-                    site = row["site"]
+                    coordinate = int(row["coordinate"])
 
-                    log.info(f"({index+1}/{len(df.index)}) Processing cutsite: gene:{geneID}, Genome:{ref}, Chr:{Chr}, cut_coordinate: {site}")
-                    fhlog.write(f"({index+1}/{len(df.index)}) Processing cutsite: gene:{geneID}, Genome:{ref}, Chr:{Chr}, cut_coordinate: {site}\n")
+                    log.info(f"({index+1}/{len(df.index)}) Processing cutsite:  Genome:{ref}, Chr:{Chr}, cut_coordinate: {coordinate}")
+                    fhlog.write(f"({index+1}/{len(df.index)}) Processing cutsite: Genome:{ref}, Chr:{Chr}, cut_coordinate: {coordinate}\n")
 
                     #get sequence from chromosome, get 150bp extra on each side, will progressively include in considered zone if no primers were found
-                    amp_st = str(int(int(gRNACut_in_chr) - int(amp_len)/2) - step_size*3 ) # buffer zone = step_size*3 bp
-                    amp_en = str(int(int(gRNACut_in_chr) + int(amp_len)/2) + step_size*3 ) # buffer zone = step_size*3 bp
-                    chr_region = get_ensembl_sequence(chromosome = Ensemble_chr, region_left = amp_st, region_right = amp_en, species = "human",expand=0)
+                    amp_st = str(int(int(coordinate) - int(amp_len)/2) - step_size*3 ) # buffer zone = step_size*3 bp
+                    amp_en = str(int(int(coordinate) + int(amp_len)/2) + step_size*3 ) # buffer zone = step_size*3 bp
+                    chr_region = get_ensembl_sequence(chromosome = Chr, region_left = amp_st, region_right = amp_en, species = "human",expand=0)
 
                     #design primer
                     primerlist, relaxation_count, good_primer_num = get_primers(inputSeq = str(chr_region),
@@ -98,8 +99,9 @@ def main():
                                              prod_size_upper=prod_size_upper,
                                              num_return = num_primer_return,
                                              step_size = step_size,
-                                             chr = Ensemble_chr,
-                                             cut_coord = gRNACut_in_chr,
+                                             ref = ref,
+                                             chr = Chr,
+                                             cut_coord = coordinate,
                                              min_dist2center = min_dist2center,
                                              num_primers_from_Primer3 = num_primers_from_Primer3,
                                              fhlog = fhlog)
@@ -136,6 +138,7 @@ def main():
 
     except Exception  as e:
         print("Unexpected error:", str(sys.exc_info()))
+        traceback.print_exc()
         print("additional information:", e)
         PrintException()
 

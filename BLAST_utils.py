@@ -6,7 +6,7 @@ import urllib.request
 import gzip
 from subprocess import Popen
 
-def check_blastDB_human():
+def check_blastDB_human(ref):
     #set BLAST binary dir
     BLAST_bin = ""
     exe_suffix = ""
@@ -28,14 +28,23 @@ def check_blastDB_human():
     if not os.path.isdir(BLASTDB_DIR):
         os.mkdir(BLASTDB_DIR)
 
-    BLAST_db_fa = "Homo_sapiens.GRCh38.dna.primary_assembly.fa"
-    BLAST_db = BLAST_db_fa + f".{thisSystem}" #make a separate db for each os system
+    if ref == "ensembl_GRCh38_latest":
+        fa = "Homo_sapiens.GRCh38.dna.primary_assembly.fa"
+        prefix = "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/"
+    elif ref == "NCBI_refseq_GRCh38.p14":
+        fa = "GCF_000001405.40_GRCh38.p14_genomic.fna"
+        prefix = "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/reference/GCF_000001405.40_GRCh38.p14/"
+    else:
+        sys.exit(f"invalid genome/ref:{ref}, possible values are: ensembl_GRCh38_latest and NCBI_refseq_GRCh38.p14")
+  
+    BLAST_db = fa + f".{thisSystem}" #make a separate db for each os system
     BLAST_db_path = os.path.join(BLASTDB_DIR, BLAST_db)
-    fa_gz = "Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
+    
+    fa_gz = fa + ".gz"
     fa_gz_path = os.path.join(BLASTDB_DIR, fa_gz)
     fa = fa_gz.rstrip(".gz")
 
-    url = "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/" + fa_gz
+    url = prefix + fa_gz
 
     #check if Blast db exists
     if not (os.path.isfile(f"{BLAST_db_path}.nsq") and os.path.isfile(f"{BLAST_db_path}.ndb") and
