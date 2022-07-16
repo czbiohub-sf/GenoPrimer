@@ -13,10 +13,9 @@ Automated primer design for genotyping CRISPR edited cells via amplicon sequenci
 ## Inputs
 
 - A csv file containing minimumlly four columns (with the exact names) describing each gene/primer design:
-  - Ensemble_ID (The transcript ID, e.g., ENST00000263736)  
-  - Ensemble_ref (The genome/build version, e.g., GRCh38)  
-  - Ensemble_chr (e.g. 2)  
-  - gRNACut_in_chr (Center position of the amplicon, in the form of coordinates on the chromosome, e.g. 45389323)   
+  - ref (The genome/build version, takes two possible values: ensembl_GRCh38_latest or NCBI_refseq_GRCh38.p14)  
+  - chr (e.g. 2)  
+  - coordinate (Center position of the amplicon, in the form of coordinates on the chromosome, e.g. 45389323)   
 
 ### [Helper script]
 If you only have gRNA sequences but not their cutsites coordinates in the genome or the Ensemble IDs,
@@ -52,7 +51,7 @@ conda env create -f environment.yml
 You are ready to run GenoPrimer
 ```
 conda activate GenoPrimer
-python GenoPrimer.py --csv test_data/test.csv --type "MiSeq"
+python GenoPrimer.py --csv test_data/input_example.csv --type "MiSeq"
 ```
 Notes:  
 (1) During first-time run, the program will download the human genome and generate Blast databases  
