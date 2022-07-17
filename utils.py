@@ -39,7 +39,7 @@ def get_ensembl_sequence(chromosome,region_left,region_right,species,expand=0):
     sequence = Seq(r.text)
     return sequence
 
-def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_size, ref, chr, cut_coord, min_dist2center, num_primers_from_Primer3,fhlog):
+def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_size, ref, chr, cut_coord, min_dist2center, num_primers_from_Primer3, thread, fhlog):
     """
     :param prod_size_lower:   product size upper bound
     :param prod_size_upper:   product size lower bound
@@ -84,7 +84,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
         User_dict1,
         {**thermo_dict, **User_dict2}) # these two dicts needs to be merged
     #check unintended products
-    dict_primers = check_unintended_products(dict_primers = dict_primers, len_input = prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, fhlog = fhlog)
+    dict_primers = check_unintended_products(dict_primers = dict_primers, len_input = prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog)
     nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
     #get primer number
@@ -99,7 +99,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
         # design primers
         dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
         # check unintended products
-        dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr=chr, cut_coord=cut_coord, nonspecific_primers=nonspecific_primers, fhlog = fhlog )
+        dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr=chr, cut_coord=cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog )
         nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
         # get primer number
@@ -123,7 +123,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
 
             dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
             # check unintended products
-            dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, fhlog = fhlog )
+            dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog )
             nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
             # get primer number
@@ -139,7 +139,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
                 #design primers
                 dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
                 # check unintended products
-                dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, fhlog = fhlog )
+                dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers,thread = thread,  fhlog = fhlog )
                 nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
                 # get primer number
@@ -154,7 +154,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
         User_dict1, User_dict2 = relax_dist2center(User_dict1 = User_dict1, User_dict2 = User_dict2, length_closer_tocenter = length_closer_tocenter)
         dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
         # check unintended products
-        dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, fhlog = fhlog )
+        dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog )
         nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
         # get primer number

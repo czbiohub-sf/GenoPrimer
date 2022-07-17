@@ -4,7 +4,7 @@ from subprocess import PIPE
 import os
 import pandas as pd
 
-def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord, nonspecific_primers,fhlog):
+def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord, nonspecific_primers,thread, fhlog):
     """
     checks unintended_products and remove primers having unintended products
     :param dict_primers:
@@ -15,7 +15,10 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
 
     dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"] = set()
 
-    numThread2use = max([1, os.cpu_count()-2]) # for BLAST, use all CPUs except 2
+    if thread == "auto":
+        numThread2use = max([1, os.cpu_count()-2]) # for BLAST, use all CPUs except 2
+    else:
+        numThread2use = int(thread)
 
     if dict_primers["PRIMER_PAIR_NUM_RETURNED"] == 0:
         return dict_primers
@@ -82,7 +85,7 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
                     to_remove.append(primer)
         print(f"to_remove:{to_remove}")
 
-        os.remove(f"{query}.out.uniq_count")
+        #os.remove(f"{query}.out.uniq_count")
 
         with open(f"{query}.out", "r") as f, open(f"{query}.out.preparsed", "w") as w:
             for line in f:
@@ -90,7 +93,7 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
                 if not primer in to_remove:
                     w.write(line)
 
-        os.remove(f"{query}.out")
+        #os.remove(f"{query}.out")
 
         #flag all the removed-primers in dict_primers as UNSPECIFIC_PRIMER_PAIR
         for primer in to_remove:
@@ -100,7 +103,7 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
         
         #parse blast out
         df = pd.read_csv(f"{query}.out.preparsed", sep = "\t", names=["qseqid", "sseqid", "qstart", "qend", "sstart", "send","pident", "mismatch"])
-        os.remove(f"{query}.out.preparsed")
+        #os.remove(f"{query}.out.preparsed")
 
         # go through each primer pair
         primer_names = df["qseqid"].unique()

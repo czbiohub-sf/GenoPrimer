@@ -20,6 +20,7 @@ def parse_args():
     parser= MyParser(description='This script designs primers around the gRNA cut site')
     parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', metavar='')
     parser.add_argument('--type', default="MiSeq", type=str, help='MiSeq:300-350bp, PacBio: 3kb', metavar='')
+    parser.add_argument('--thread', default="auto", type=str, help='auto or an integer, auto = use max-2', metavar='')
     #parser.add_argument('--genome', default="ensembl_GRCh38_latest", type=str, help='other accepted values are: NCBI_refseq_GRCh38.p14', metavar='')
     config = parser.parse_args()
     if len(sys.argv)==1: # print help message if arguments are not valid
@@ -104,6 +105,7 @@ def main():
                                              cut_coord = coordinate,
                                              min_dist2center = min_dist2center,
                                              num_primers_from_Primer3 = num_primers_from_Primer3,
+                                             thread = config["thread"],
                                              fhlog = fhlog)
 
                     #process primers found
