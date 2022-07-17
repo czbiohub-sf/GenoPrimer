@@ -5,6 +5,7 @@
 .idea/inspectionProfiles/Project_Default.xml
 .idea/GenoPrimer.iml
 .idea/modules.xml
+.idea/
 __pycache__/utils.cpython-38.pyc
 __pycache__/utils.cpython-310.pyc
 __pycache__/
