@@ -4,12 +4,73 @@ from Bio.Seq import Seq
 import re
 import math
 import csv
+import os
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from check_unintend_prod import check_unintended_products
+import urllib.request
+import shutil
+import gzip
+from Bio import SeqIO
+from Bio.Seq import Seq
 
 def flatten(t):
     return [item for sublist in t for item in sublist]
+
+def check_genome_chr_fasta(chromosome, genome):
+    '''
+    check if a fasta file under the path genome/chromosome exists
+    if not download the genome file and split the fa file based on chromosomes
+    '''
+    target_file_path = os.path.join("BLAST_databases",genome,f"{chromosome}.fa")
+    if os.path.isfile(target_file_path):
+        return target_file_path
+    else: #download the genome
+        print(f"Could not find {chromosome}.fa in BLAST_databases/{genome}/, downloading {genome} sequence file, this is a one-time process", flush=True)
+        if genome == "ensembl_GRCh38_latest":
+            fa = "Homo_sapiens.GRCh38.dna.primary_assembly.fa"
+            prefix = "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/"
+        elif genome == "NCBI_refseq_GRCh38.p14":
+            fa = "GCF_000001405.40_GRCh38.p14_genomic.fna"
+            prefix = "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/reference/GCF_000001405.40_GRCh38.p14/"
+        else:
+            sys.exit(f"invalid genome/ref:{ref}, possible values are: ensembl_GRCh38_latest and NCBI_refseq_GRCh38.p14")
+        url = prefix + fa + ".gz"
+        fa_gz_path = os.path.join("BLAST_databases", genome, f"{fa}.gz")
+        fa_path = os.path.join("BLAST_databases", genome, f"{fa}")
+        #check directory
+        if not os.path.isdir(os.path.join("BLAST_databases",genome)):
+            os.mkdir(os.path.join("BLAST_databases",genome))
+        # Download the file from `url` and save it locally under `file_name`:
+        with urllib.request.urlopen(url) as response, open(fa_gz_path, 'wb') as out_file:
+            shutil.copyfileobj(response, out_file)        
+        #unzip file
+        if os.path.isfile(fa_path): #remove unzipped file, b/c it could be a partial file
+            os.remove(fa_path)
+        print(f"unzipping {fa_gz_path}, this is a one-time process", flush=True)
+        with gzip.open(fa_gz_path) as f_in:
+            with open(fa_path, "wb") as f_out:
+                shutil.copyfileobj(f_in, f_out)
+        #extract chr sequences and save as fa files
+        with open(fa_path, "r") as handle:
+            fasta_sequences = SeqIO.parse(handle,'fasta')
+            for entry in fasta_sequences:
+                name, desc, seq = entry.id, entry.description, str(entry.seq)
+                chr_fa_path = os.path.join("BLAST_databases", genome, f"{name}.fa")
+                with open(chr_fa_path, "w") as wfh:
+                    wfh.write(f">{name}\n{seq}\n")
+        #remove intermediate files
+        os.remove(fa_gz_path)
+        os.remove(fa_path)
+        return target_file_path
+
+def get_sequence(chromosome,region_left,region_right,genome,expand=0):
+    chr_fa_path = check_genome_chr_fasta(chromosome, genome)
+    with open(chr_fa_path, "r") as handle:
+        fasta_obj = next(SeqIO.parse(handle,'fasta')) #there is only one seq in the fasta file
+        sequence = str(fasta_obj.seq)
+        subsequence = sequence[int(region_left):(int(region_right)+1)]
+        return subsequence
 
 def get_ensembl_sequence(chromosome,region_left,region_right,species,expand=0):
     '''

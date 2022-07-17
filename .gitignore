@@ -32,3 +32,5 @@ Production/
 slurm.out
 *.preparsed
 *.uniq_count
+!BLAST_databases
+BLAST_databases/*

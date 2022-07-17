@@ -92,7 +92,7 @@ def main():
                     #get sequence from chromosome, get 150bp extra on each side, will progressively include in considered zone if no primers were found
                     amp_st = str(int(int(coordinate) - int(amp_len)/2) - step_size*3 ) # buffer zone = step_size*3 bp
                     amp_en = str(int(int(coordinate) + int(amp_len)/2) + step_size*3 ) # buffer zone = step_size*3 bp
-                    chr_region = get_ensembl_sequence(chromosome = Chr, region_left = amp_st, region_right = amp_en, species = "human",expand=0)
+                    chr_region = get_sequence(chromosome = Chr, region_left = amp_st, region_right = amp_en, genome = ref, expand=0) #switched from get_ensembl_sequence() to get_sequence()
 
                     #design primer
                     primerlist, relaxation_count, good_primer_num = get_primers(inputSeq = str(chr_region),
