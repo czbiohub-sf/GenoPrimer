@@ -29,7 +29,7 @@ def parse_args():
 
 config = vars(parse_args())
 num_primer_return = 3
-num_primers_from_Primer3 = 297 + num_primer_return
+num_primers_from_Primer3 = 397 + num_primer_return
 
 #default settings for MiSeq
 amp_len = 300

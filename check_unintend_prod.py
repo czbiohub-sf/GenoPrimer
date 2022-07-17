@@ -1,5 +1,6 @@
 from BLAST_utils import check_blastDB_human
 from subprocess import Popen
+from subprocess import PIPE
 import os
 import pandas as pd
 
@@ -20,6 +21,8 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
         return dict_primers
 
     max_pcr_prod_size = 6000
+    max_blast_hits = 5000 #max number of hsps across all hits allowed for each primer, offending primers will not be considered
+
     #print(f"Listing all possible PCR products < {max_pcr_prod_size} bp", flush=True)
     fhlog.write(f"Listing all possible PCR products < {max_pcr_prod_size} bp\n")
 
@@ -57,9 +60,47 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
         p.communicate()  # now wait for the process to finish
         os.remove(tmp_fa)
 
-        #parse blast out
+        #pre-parse blast out, remove primers with too many hits in the genome
+        with open(f"{query}.out.uniq_count", "w") as f:
+            cmd1 = ["cat", f"{query}.out"]
+            cmd2 = ["cut", "-f1"]
+            cmd3 = ["uniq", "-c"]
+            cmd4 = ["sort", "-r"]
+            p1 = Popen(cmd1, stdout=PIPE)
+            p2 = Popen(cmd2, stdin=p1.stdout,stdout=PIPE)
+            p3 = Popen(cmd3, stdin=p2.stdout,stdout=PIPE)
+            p4 = Popen(cmd4, stdin=p3.stdout,stdout=f)
+            p4.communicate()  # now wait for the process to finish
 
-        df = pd.read_csv(f"{query}.out", sep = "\t", names=["qseqid", "sseqid", "qstart", "qend", "sstart", "send","pident", "mismatch"])
+        to_remove = []
+        with open(f"{query}.out.uniq_count", "r") as f:
+            for line in f:
+                line = line.lstrip().rstrip()
+                num,primer = line.split(" ")
+                #print(f"{num},{primer}")
+                if int(num) >= max_blast_hits:
+                    to_remove.append(primer)
+        print(f"to_remove:{to_remove}")
+
+        os.remove(f"{query}.out.uniq_count")
+
+        with open(f"{query}.out", "r") as f, open(f"{query}.out.preparsed", "w") as w:
+            for line in f:
+                primer = line.split("\t")[0]
+                if not primer in to_remove:
+                    w.write(line)
+
+        os.remove(f"{query}.out")
+
+        #flag all the removed-primers in dict_primers as UNSPECIFIC_PRIMER_PAIR
+        for primer in to_remove:
+            idx = primer.split("_")[0]
+            dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"].add(idx)
+            print(f"idx:{idx} removed")
+        
+        #parse blast out
+        df = pd.read_csv(f"{query}.out.preparsed", sep = "\t", names=["qseqid", "sseqid", "qstart", "qend", "sstart", "send","pident", "mismatch"])
+        os.remove(f"{query}.out.preparsed")
 
         # go through each primer pair
         primer_names = df["qseqid"].unique()
@@ -70,7 +111,6 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
             df_1pair = df[(df["qseqid"] == idx + "_F") | (df["qseqid"] == idx + "_R")]
             dict_primers = find_primer_parings(df_1pair=df_1pair,dict_primers=dict_primers, max_pcr_prod_size = max_pcr_prod_size, dict_primer_len=dict_primer_len, idx= idx, cut_chr =cut_chr, cut_coord = cut_coord, fhlog = fhlog)
 
-        os.remove(f"{query}.out")
     return dict_primers
 
 

@@ -51,7 +51,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
     ##################
     #setup parameters#
     ##################
-    max_n_pairs_primer = 600
+    max_n_pairs_primer = 800
 
     min_dist2center = min_dist2center
 
