@@ -63,7 +63,7 @@ chmod a+xX bin/ncbi-blast-2.12.0+-x64-linux/bin/*
 ### Helper script
 Input:
 - A csv file containing minimumlly two columns (with the exact names):
-  - gene_name (The transcript ID, e.g., ENSG00000068784 or SRBD1)  
+  - "ENST" or "gene_name" (e.g., ENSG00000068784 or SRBD1) Note: "ENST" is preferred over "gene_name" 
   - gRNA_protospacer (The sequence of the protospacer, not including the PAM, e.g., GGGCTCTCCCTGGGCGGCCA)  
   - ref (currently one of the two options: "ensembl_GRCh38_latest", "NCBI_refseq_GRCh38.p14"
 Usage:
