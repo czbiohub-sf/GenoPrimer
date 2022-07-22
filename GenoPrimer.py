@@ -40,9 +40,9 @@ step_size = 30
 min_dist2center = 100
 
 if config['type'] == "PacBio":
-    amp_len = 3500
-    prod_size_lower = 2800
-    prod_size_upper = 3200
+    amp_len = 4200
+    prod_size_lower = 3300
+    prod_size_upper = 3700
     step_size = 100
     min_dist2center = 1000
 
@@ -64,9 +64,13 @@ def main():
 
         df = pd.read_csv(os.path.join(config['csv']))
 
-        must_have_cols = ["ref", "chr", "coordinate"]
-        if not all(col in df.columns for col in must_have_cols):
-            log.error(f"The csv file does not contain all the required columns: ref, chr, coordinate")
+        must_have_cols1 = ["ref", "chr", "coordinate"]
+        flag1 = all(col in df.columns for col in must_have_cols1)
+        must_have_cols2 = ["ref","mapping:Ensemble_chr","mapping:gRNACut_in_chr"]
+        flag2 = all(col in df.columns for col in must_have_cols2)
+
+        if (flag1 or flag2) == False:
+            log.error(f"The csv file does not contain all the required columns: [ref, chr, coordinate] or [ref, mapping:Ensemble_chr, mapping:gRNACut_in_chr]")
             sys.exit("Please fix the error(s) above and rerun the script")
 
         #read input csv file
@@ -82,9 +86,28 @@ def main():
             with open(f"{config['csv']}.log.txt", "w") as fhlog:
                 #go over each cutsite
                 for index, row in df.iterrows():
-                    ref = row["ref"]
-                    Chr = row["chr"]
-                    coordinate = int(row["coordinate"])
+                    if flag1:
+                        ref = row["ref"]
+                        Chr = row["chr"]
+                        coordinate = int(row["coordinate"])
+                    if flag2:
+                        ref = row["ref"]
+                        Chr = row["mapping:Ensemble_chr"]
+                        coordinate = ""
+                        gene_name = row["gene_name"]
+
+                        #select the correct site when multi-mapping
+                        if "|" in Chr:
+                            selected_idx = 0
+                            for idx,item in enumerate(row["mapping:Gene_name"].split("|")):
+                                if f"{gene_name}-" in item:
+                                    #print(f"{gene_name}- in {item}\n")
+                                    selected_idx = idx
+                            coordinate = int(row["mapping:gRNACut_in_chr"].split("|")[selected_idx])
+                            Chr = Chr.split("|")[selected_idx]
+                            #print(coordinate)
+                        else:
+                            coordinate = int(row["mapping:gRNACut_in_chr"])
 
                     log.info(f"({index+1}/{len(df.index)}) Processing cutsite:  Genome:{ref}, Chr:{Chr}, cut_coordinate: {coordinate}")
                     fhlog.write(f"({index+1}/{len(df.index)}) Processing cutsite: Genome:{ref}, Chr:{Chr}, cut_coordinate: {coordinate}\n")

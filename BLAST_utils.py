@@ -5,6 +5,7 @@ import shutil
 import urllib.request
 import gzip
 from subprocess import Popen
+from Bio import SeqIO
 
 def check_blastDB_human(ref):
     #set BLAST binary dir

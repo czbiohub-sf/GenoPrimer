@@ -29,6 +29,7 @@ test_data/test.csv.log.txt
 test_data/test.primer.csv
 Production/
 *.out
+*.fa
 slurm.out
 *.preparsed
 *.uniq_count
