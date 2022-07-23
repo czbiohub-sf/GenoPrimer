@@ -19,7 +19,7 @@ class MyParser(argparse.ArgumentParser):
 def parse_args():
     parser= MyParser(description='This script designs primers around the gRNA cut site')
     parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', metavar='')
-    parser.add_argument('--type', default="MiSeq", type=str, help='MiSeq:300-350bp, PacBio: 3kb', metavar='')
+    parser.add_argument('--type', default="MiSeq", type=str, help='MiSeq:300-350bp, PacBio: 3.5kb', metavar='')
     parser.add_argument('--thread', default="auto", type=str, help='auto or an integer, auto = use max-2', metavar='')
     #parser.add_argument('--genome', default="ensembl_GRCh38_latest", type=str, help='other accepted values are: NCBI_refseq_GRCh38.p14', metavar='')
     config = parser.parse_args()
@@ -95,17 +95,21 @@ def main():
                         Chr = row["mapping:Ensemble_chr"]
                         coordinate = ""
                         gene_name = row["gene_name"]
+                        ENST = row["ENST"]
 
                         #select the correct site when multi-mapping
                         if "|" in Chr:
                             selected_idx = 0
-                            for idx,item in enumerate(row["mapping:Gene_name"].split("|")):
-                                if f"{gene_name}-" in item:
+                            for idx,item in enumerate(row["mapping:Gene_name"].split("|")): # gene name based matching, not always works
+                                if gene_name !="" and not pd.isna(gene_name) and f"{gene_name}-" in item:
                                     #print(f"{gene_name}- in {item}\n")
+                                    selected_idx = idx
+                            for idx, item in enumerate(row["mapping:ID"].split("|")): # ENST based matching, will overwite the matching based on gene name
+                                if ENST != "" and not pd.isna(ENST) and ENST in item:
                                     selected_idx = idx
                             coordinate = int(row["mapping:gRNACut_in_chr"].split("|")[selected_idx])
                             Chr = Chr.split("|")[selected_idx]
-                            #print(coordinate)
+                            #print(f"{Chr} {coordinate}")
                         else:
                             coordinate = int(row["mapping:gRNACut_in_chr"])
 
