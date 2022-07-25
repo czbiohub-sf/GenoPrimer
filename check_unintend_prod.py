@@ -58,7 +58,7 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
         # specify BLAST db and query
         query = tmp_fa
         # start BLAST
-        cmd = [f"{BLAST_bin}blastn{exe_suffix}", "-task", "blastn-short", "-query", f"{query}", "-db", f"{BLAST_db_path}", "-max_hsps", "2000", "-evalue", "3", "-num_threads", f"{numThread2use}", "-perc_identity", "75", "-outfmt", "6 qseqid sseqid qstart qend sstart send pident mismatch", "-out", f"{query}.out"]
+        cmd = [f"{BLAST_bin}blastn{exe_suffix}", "-task", "blastn-short", "-query", f"{query}", "-db", f"{BLAST_db_path}", "-max_hsps", "2000", "-num_threads", f"{numThread2use}", "-perc_identity", "75", "-outfmt", "6 qseqid sseqid qstart qend sstart send pident mismatch", "-out", f"{query}.out"]
         p = Popen(cmd, universal_newlines=True)
         p.communicate()  # now wait for the process to finish
         os.remove(tmp_fa)
@@ -113,7 +113,6 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
         for idx in primer_idx:
             df_1pair = df[(df["qseqid"] == idx + "_F") | (df["qseqid"] == idx + "_R")]
             dict_primers = find_primer_parings(df_1pair=df_1pair,dict_primers=dict_primers, max_pcr_prod_size = max_pcr_prod_size, dict_primer_len=dict_primer_len, idx= idx, cut_chr =cut_chr, cut_coord = cut_coord, fhlog = fhlog)
-
     return dict_primers
 
 

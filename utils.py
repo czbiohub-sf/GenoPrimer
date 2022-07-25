@@ -230,6 +230,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
         return [None, relaxation_count, 0]
     else: #primer found:
         primer_list = []
+        dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"] = [int(i) for i in dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"]] # needed to force int type, for i in dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"] to work
         for i in range(0, dict_primers['PRIMER_PAIR_NUM_RETURNED']): # go through all primers
             if not i in dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"]: #avoid getting unspecific primers
                 if len(primer_list) == num_return: # return list if full, check if current primer is further away from the 1st primer, if so, replace the last primer
