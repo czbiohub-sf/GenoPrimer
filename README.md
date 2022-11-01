@@ -1,3 +1,5 @@
+![GitHub last commit](https://img.shields.io/github/last-commit/czbiohub/GenoPrimer)
+
 # GenoPrimer
 Automated primer design for genotyping CRISPR edited cells via amplicon sequencing
 
