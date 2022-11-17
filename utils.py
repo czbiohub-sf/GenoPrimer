@@ -17,6 +17,20 @@ from Bio.Seq import Seq
 def flatten(t):
     return [item for sublist in t for item in sublist]
 
+def check_gzip_integrity(filepath):
+    import gzip
+    import os
+    if not os.path.isfile(filepath):
+        return False #file doesn't exist
+    chunksize = 1024 * 1024
+    with gzip.open(filepath) as g:
+        try:
+            while g.read(chunksize):
+                pass
+            return True
+        except:
+            return False #file corrupted
+
 def check_genome_chr_fasta(chromosome, genome):
     '''
     check if a fasta file under the path genome/chromosome exists
@@ -26,7 +40,7 @@ def check_genome_chr_fasta(chromosome, genome):
     if os.path.isfile(target_file_path):
         return target_file_path
     else: #download the genome
-        print(f"Could not find {chromosome}.fa in BLAST_databases/{genome}/, downloading {genome} sequence file, this is a one-time process", flush=True)
+        print(f"Could not find {chromosome}.fa in BLAST_databases/{genome}/, automatically generating reference genome files", flush=True)
         if genome == "ensembl_GRCh38_latest":
             fa = "Homo_sapiens.GRCh38.dna.primary_assembly.fa"
             prefix = "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/"
@@ -41,13 +55,18 @@ def check_genome_chr_fasta(chromosome, genome):
         #check directory
         if not os.path.isdir(os.path.join("BLAST_databases",genome)):
             os.makedirs(os.path.join("BLAST_databases",genome))
+        # check if the gz file exists, and also check integrity
         # Download the file from `url` and save it locally under `file_name`:
-        with urllib.request.urlopen(url) as response, open(fa_gz_path, 'wb') as out_file:
-            shutil.copyfileobj(response, out_file)        
+        if not check_gzip_integrity(fa_gz_path): #check gzip file integrity
+            print(f"...Downloading {fa}.gz, this is a one-time process (this may take several minutes, if your internet connection is spotty, the download may fail and display an error mentioning an unexpected end of the stream)", flush=True)
+            if os.path.isfile(fa_gz_path): #remove gzip file, b/c it could be a partial file
+                os.remove(fa_gz_path)
+            with urllib.request.urlopen(url) as response, open(fa_gz_path, 'wb') as out_file: #download gzip file
+                shutil.copyfileobj(response, out_file)        
         #unzip file
         if os.path.isfile(fa_path): #remove unzipped file, b/c it could be a partial file
             os.remove(fa_path)
-        print(f"unzipping {fa_gz_path}, this is a one-time process", flush=True)
+        print(f"...Unzipping {fa_gz_path}", flush=True)
         with gzip.open(fa_gz_path) as f_in:
             with open(fa_path, "wb") as f_out:
                 shutil.copyfileobj(f_in, f_out)
@@ -60,8 +79,9 @@ def check_genome_chr_fasta(chromosome, genome):
                 with open(chr_fa_path, "w") as wfh:
                     wfh.write(f">{name}\n{seq}\n")
         #remove intermediate files
-        os.remove(fa_gz_path)
+        #os.remove(fa_gz_path)  # save the gz file for making BLAST database
         os.remove(fa_path)
+        print(f"Finished generating reference genome files (this is a one-time process)")
         return target_file_path
 
 def get_sequence(chromosome,region_left,region_right,genome,expand=0):
