@@ -40,7 +40,7 @@ def check_genome_chr_fasta(chromosome, genome):
         fa_path = os.path.join("BLAST_databases", genome, f"{fa}")
         #check directory
         if not os.path.isdir(os.path.join("BLAST_databases",genome)):
-            os.mkdirs(os.path.join("BLAST_databases",genome))
+            os.makedirs(os.path.join("BLAST_databases",genome))
         # Download the file from `url` and save it locally under `file_name`:
         with urllib.request.urlopen(url) as response, open(fa_gz_path, 'wb') as out_file:
             shutil.copyfileobj(response, out_file)        
