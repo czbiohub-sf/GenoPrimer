@@ -68,10 +68,8 @@ def main():
 
         #read input csv file
         df = pd.read_csv(os.path.join(config['csv']))
-        print(df)
         #convert genome string to be recognizable 
         df['ref'] = df['ref'].apply(get_genome_string)
-        print(df)
 
         must_have_cols1 = ["ref", "chr", "coordinate"]
         flag1 = all(col in df.columns for col in must_have_cols1)
