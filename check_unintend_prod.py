@@ -4,7 +4,7 @@ from subprocess import PIPE
 import os
 import pandas as pd
 
-def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord, nonspecific_primers,thread, fhlog):
+def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord, nonspecific_primers,thread, fhlog,outdir):
     """
     checks unintended_products and remove primers having unintended products
     :param dict_primers:
@@ -33,6 +33,7 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
     #create primer.fa
     empty_file_flag = 1 # this value =1 if primer.fa is empty
     tmp_fa = f"chr{cut_chr}_{cut_coord}_primer.fa"
+    tmp_fa = os.path.join(outdir,tmp_fa)
     with open(tmp_fa, "w") as wfh:
         for i in range(0, dict_primers["PRIMER_PAIR_NUM_RETURNED"]):
             Lseq = dict_primers["PRIMER_LEFT_{}_SEQUENCE".format(i)]
@@ -64,7 +65,8 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
         os.remove(tmp_fa)
 
         #pre-parse blast out, remove primers with too many hits in the genome
-        with open(f"{query}.out.uniq_count", "w") as f, open(f"{query}.out", "r") as i:
+        uniq_cout = f"{query}.out.uniq_count"
+        with open(uniq_cout, "w") as f, open(f"{query}.out", "r") as i:
             uniq_count = dict()
             for line in i:
                 pname = line.split("\t")[0]
@@ -76,7 +78,7 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
                 f.write(f"{uniq_count[k]}\t{k}\n")
 
         to_remove = []
-        with open(f"{query}.out.uniq_count", "r") as f:
+        with open(uniq_cout, "r") as f:
             for line in f:
                 line = line.lstrip().rstrip()
                 num,primer = line.split("\t")
@@ -85,7 +87,7 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
                     to_remove.append(primer)
         #print(f"to_remove:{to_remove}")
 
-        os.remove(f"{query}.out.uniq_count")
+        os.remove(uniq_cout)
 
         with open(f"{query}.out", "r") as f, open(f"{query}.out.preparsed", "w") as w:
             for line in f:

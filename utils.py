@@ -13,6 +13,7 @@ import shutil
 import gzip
 from Bio import SeqIO
 from Bio.Seq import Seq
+import sys
 
 def flatten(t):
     return [item for sublist in t for item in sublist]
@@ -48,7 +49,7 @@ def check_genome_chr_fasta(chromosome, genome):
             fa = "GCF_000001405.40_GRCh38.p14_genomic.fna"
             prefix = "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/reference/GCF_000001405.40_GRCh38.p14/"
         else:
-            sys.exit(f"invalid genome/ref:{ref}, possible values are: ensembl_GRCh38_latest and NCBI_refseq_GRCh38.p14")
+            sys.exit(f"invalid genome/ref:{genome}, possible values are: ensembl_GRCh38_latest and NCBI_refseq_GRCh38.p14")
         url = prefix + fa + ".gz"
         fa_gz_path = os.path.join("BLAST_databases", genome, f"{fa}.gz")
         fa_path = os.path.join("BLAST_databases", genome, f"{fa}")
@@ -120,7 +121,7 @@ def get_ensembl_sequence(chromosome,region_left,region_right,species,expand=0):
     sequence = Seq(r.text)
     return sequence
 
-def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_size, ref, chr, cut_coord, min_dist2center, num_primers_from_Primer3, thread, fhlog):
+def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_size, ref, chr, cut_coord, min_dist2center, num_primers_from_Primer3, thread, fhlog, outdir):
     """
     :param prod_size_lower:   product size upper bound
     :param prod_size_upper:   product size lower bound
@@ -165,7 +166,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
         User_dict1,
         {**thermo_dict, **User_dict2}) # these two dicts needs to be merged
     #check unintended products
-    dict_primers = check_unintended_products(dict_primers = dict_primers, len_input = prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog)
+    dict_primers = check_unintended_products(dict_primers = dict_primers, len_input = prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog, outdir = outdir)
     nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
     #get primer number
@@ -180,7 +181,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
         # design primers
         dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
         # check unintended products
-        dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr=chr, cut_coord=cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog )
+        dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr=chr, cut_coord=cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog, outdir=outdir )
         nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
         # get primer number
@@ -204,7 +205,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
 
             dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
             # check unintended products
-            dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog )
+            dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog, outdir=outdir )
             nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
             # get primer number

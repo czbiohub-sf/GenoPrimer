@@ -9,6 +9,7 @@ from utils import *
 import gc
 import logging
 import traceback
+import shutil
 
 class MyParser(argparse.ArgumentParser):
     def error(self, message):
@@ -21,7 +22,9 @@ def parse_args():
     parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', metavar='')
     parser.add_argument('--type', default="MiSeq", type=str, help='MiSeq:300-350bp, PacBio: 3.5kb', metavar='')
     parser.add_argument('--thread', default="auto", type=str, help='auto or an integer, auto = use max-2', metavar='')
+    parser.add_argument('--outdir', default="out", type=str, help='name of the output directory', metavar='')
     #parser.add_argument('--genome', default="ensembl_GRCh38_latest", type=str, help='other accepted values are: NCBI_refseq_GRCh38.p14', metavar='')
+    parser.add_argument('--db', default="Ensembl", type=str, help='name of the output directory', metavar='')
     config = parser.parse_args()
     if len(sys.argv)==1: # print help message if arguments are not valid
         parser.print_help()
@@ -29,6 +32,7 @@ def parse_args():
     return config
 
 config = vars(parse_args())
+outdir = config['outdir']
 num_primer_return = 3
 num_primers_from_Primer3 = 397 + num_primer_return
 
@@ -62,7 +66,12 @@ def main():
             log.error(f"need to specify an input csv file")
             sys.exit("Please fix the error(s) above and rerun the script")
 
+        #read input csv file
         df = pd.read_csv(os.path.join(config['csv']))
+        print(df)
+        #convert genome string to be recognizable 
+        df['ref'] = df['ref'].apply(get_genome_string)
+        print(df)
 
         must_have_cols1 = ["ref", "chr", "coordinate"]
         flag1 = all(col in df.columns for col in must_have_cols1)
@@ -72,9 +81,14 @@ def main():
         if (flag1 or flag2) == False:
             log.error(f"The csv file does not contain all the required columns: [ref, chr, coordinate] or [ref, mapping:Ensemble_chr, mapping:gRNACut_in_chr]")
             sys.exit("Please fix the error(s) above and rerun the script")
+        #make a copy of the input to the output folder
+        shutil.copyfile(os.path.join(config['csv']), os.path.join(outdir,"input.csv"))
+        
+        #make output dir
+        mkdir(outdir)
 
-        #read input csv file
-        with open(os.path.join(f"{config['csv'].rstrip('csv')}primer.csv"), 'w') as outcsv:
+        #make output csv and begin looping over input
+        with open(os.path.join(f"out.csv"), 'w') as outcsv:
             outcsv.write(",".join(list(df.columns) + ["Constraints_relaxation_iterations", "Primer Pair 1 For", "Primer Pair 1 Rev", "Primer Pair 1 For tm", "Primer Pair 1 Rev tm", "Primer Pair 1 Prod Size", "Primer Pair 2 For", "Primer Pair 2 Rev", "Primer Pair 2 For tm", "Primer Pair 2 Rev tm", "Primer Pair 2 Prod Size", "Primer Pair 3 For", "Primer Pair 3 Rev", "Primer Pair 3 For tm", "Primer Pair 3 Rev tm", "Primer Pair 3 Prod Size"])) #header
             outcsv.write("\n")
             starttime = datetime.datetime.now()
@@ -83,7 +97,7 @@ def main():
             good_primer_count = 0
             cutsite_count_noprimer = 0
 
-            with open(f"{config['csv']}.log.txt", "w") as fhlog:
+            with open(os.path.join(outdir,f"log.txt"), "w") as fhlog:
                 #go over each cutsite
                 for index, row in df.iterrows():
                     if flag1:
@@ -133,7 +147,8 @@ def main():
                                              min_dist2center = min_dist2center,
                                              num_primers_from_Primer3 = num_primers_from_Primer3,
                                              thread = config["thread"],
-                                             fhlog = fhlog)
+                                             fhlog = fhlog,
+                                             outdir = outdir)
 
                     #process primers found
                     if primerlist is None: #no primers found
@@ -182,6 +197,20 @@ def PrintException():
     linecache.checkcache(filename)
     line = linecache.getline(filename, lineno, f.f_globals)
     print('EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj))
+    
+def mkdir(mypath):
+    if not os.path.exists(mypath):
+        os.makedirs(mypath)
 
+def get_genome_string(ver):
+    '''
+    furnish genome string with prefix and suffix, so it will get recognized by GenoPrimer
+    '''
+    if not (ver.startswith("ensembl_") or ver.startswith("NCBI_refseq")):
+        if config["db"] == "Ensembl":
+            return f"ensembl_{ver}_latest"
+        if config["db"] == "NCBI":
+            return f"NCBI_refseq_{ver}.p14"
+    return ver
 
 if __name__ == "__main__": main()    
