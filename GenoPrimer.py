@@ -80,13 +80,14 @@ def main():
             log.error(f"The csv file does not contain all the required columns: [ref, chr, coordinate] or [ref, mapping:Ensemble_chr, mapping:gRNACut_in_chr]")
             sys.exit("Please fix the error(s) above and rerun the script")
         #make a copy of the input to the output folder
-        shutil.copyfile(os.path.join(config['csv']), os.path.join(outdir,"input.csv"))
+        if not os.path.isfile(os.path.join(outdir,"input.csv")):
+            shutil.copyfile(os.path.join(config['csv']), os.path.join(outdir,"input.csv"))
         
         #make output dir
         mkdir(outdir)
 
         #make output csv and begin looping over input
-        with open(os.path.join(f"out.csv"), 'w') as outcsv:
+        with open(os.path.join(outdir, f"out.csv"), 'w') as outcsv:
             outcsv.write(",".join(list(df.columns) + ["Constraints_relaxation_iterations", "Primer Pair 1 For", "Primer Pair 1 Rev", "Primer Pair 1 For tm", "Primer Pair 1 Rev tm", "Primer Pair 1 Prod Size", "Primer Pair 2 For", "Primer Pair 2 Rev", "Primer Pair 2 For tm", "Primer Pair 2 Rev tm", "Primer Pair 2 Prod Size", "Primer Pair 3 For", "Primer Pair 3 Rev", "Primer Pair 3 For tm", "Primer Pair 3 Rev tm", "Primer Pair 3 Prod Size"])) #header
             outcsv.write("\n")
             starttime = datetime.datetime.now()
