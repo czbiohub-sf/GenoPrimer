@@ -4,7 +4,7 @@
 Automated primer design for genotyping CRISPR edited cells via amplicon sequencing
 
 ## Features
-- Two modes: MiSeq (250 bp amplicon) and PacBio (~3000 bp amplicon)
+- Two modes: short (250 bp amplicon, MiSeq) and long (~3000 bp amplicon, PacBio)
 - Automatically relaxes the criteria if no primers are found initially
 - Invokes primer3 to perform thermodynamics calculation
 - Use Blast to check unintended PCR products 
