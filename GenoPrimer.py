@@ -20,7 +20,7 @@ class MyParser(argparse.ArgumentParser):
 def parse_args():
     parser= MyParser(description='This script designs primers around the gRNA cut site')
     parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', metavar='')
-    parser.add_argument('--type', default="MiSeq", type=str, help='MiSeq:300-350bp, PacBio: 3.5kb', metavar='')
+    parser.add_argument('--type', default="short", type=str, help='short:300-350bp, long: 3.5kb', metavar='')
     parser.add_argument('--thread', default="auto", type=str, help='auto or an integer, auto = use max-2', metavar='')
     parser.add_argument('--outdir', default="out", type=str, help='name of the output directory', metavar='')
     #parser.add_argument('--genome', default="ensembl_GRCh38_latest", type=str, help='other accepted values are: NCBI_refseq_GRCh38.p14', metavar='')
@@ -43,7 +43,7 @@ prod_size_upper = 280
 step_size = 30
 min_dist2center = 100
 
-if config['type'] == "PacBio":
+if config['type'] == "long":
     amp_len = 4200
     prod_size_lower = 3300
     prod_size_upper = 3700
