@@ -8,7 +8,7 @@ Automated primer design for genotyping CRISPR edited cells via amplicon sequenci
 - Automatically relaxes the criteria if no primers are found initially
 - Invokes primer3 to perform thermodynamics calculation
 - Use Blast to check unintended PCR products 
-  - Autodetects system and use matching Blast executable: Linux, MacOS, Windows
+  - Autodetects OS and use matching Blast executables for Linux, MacOS, Windows
   - Autodetects CPU number and multi-threads Blast search ( saves 2 CPUs for the user)
 - Automatically downloads and uses the human genome by default
 
