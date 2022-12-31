@@ -17,8 +17,8 @@ Automated primer design for genotyping CRISPR edited cells via amplicon sequenci
 - A csv file containing minimumlly three columns (with the exact names):
   - **ref**  
       The genome/build version, takes two possible values: ensembl_GRCh38_latest or NCBI_refseq_GRCh38.p14  
-  - **chr** 
-      e.g. 2 
+  - **chr**  
+      e.g. 2  
   - **coordinate**  
       Center position of the amplicon, in the form of coordinates on the chromosome, e.g. 45389323
 
