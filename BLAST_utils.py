@@ -21,7 +21,7 @@ def check_gzip_integrity(filepath):
         except:
             return False #file corrupted
 
-def check_blastDB_human(ref):
+def check_blastDB(ref):
     #set BLAST binary dir
     BLAST_bin = ""
     exe_suffix = ""
@@ -51,10 +51,10 @@ def check_blastDB_human(ref):
         prefix = "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/reference/GCF_000001405.40_GRCh38.p14/"
     else:
         sys.exit(f"invalid genome/ref:{ref}, possible values are: ensembl_GRCh38_latest and NCBI_refseq_GRCh38.p14")
-  
+
     BLAST_db = fa + f".{thisSystem}" #make a separate db for each os system
     BLAST_db_path = os.path.join(BLASTDB_DIR, BLAST_db)
-    
+
     fa_gz = fa + ".gz"
     fa_gz_path = os.path.join(BLASTDB_DIR, ref, fa_gz)
     fa = fa_gz.rstrip(".gz")
@@ -76,7 +76,7 @@ def check_blastDB_human(ref):
             if os.path.isfile(fa_gz_path): #remove gzip file, b/c it could be a partial file
                 os.remove(fa_gz_path)
             with urllib.request.urlopen(url) as response, open(fa_gz_path, 'wb') as out_file: #download gzip file
-                shutil.copyfileobj(response, out_file)  
+                shutil.copyfileobj(response, out_file)
 
         #unzip file
         if os.path.isfile(BLAST_db_path): #remove unzipped file, b/c it could be a partial file

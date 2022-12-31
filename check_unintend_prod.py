@@ -1,13 +1,14 @@
-from BLAST_utils import check_blastDB_human
+from BLAST_utils import check_blastDB
 from subprocess import Popen
 from subprocess import PIPE
 import os
 import pandas as pd
 
-def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord, nonspecific_primers,thread, fhlog,outdir):
+def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord, nonspecific_primers,thread, fhlog,outdir, aligner="BLAST"):
     """
     checks unintended_products and remove primers having unintended products
     :param dict_primers:
+    :param Aligner: BLAST or Bowtie2
 
     :param len_input: the length of primer
     :return: dict_primers(updated) #add a key PRIMER_PAIR_NUM_RETURNED_SPECIFIC
@@ -50,21 +51,27 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
                 dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"].add(i)
 
     if empty_file_flag==0:
-        #blast
-        # check blastDB (human) and also return BLAST bin directory
-        BLAST_bin, exe_suffix, BLAST_db_path = check_blastDB_human(ref)
-        # print(BLAST_bin)
-        # print(exe_suffix)
-        # print(BLAST_db_path)
-        # specify BLAST db and query
-        query = tmp_fa
-        # start BLAST
-        cmd = [f"{BLAST_bin}blastn{exe_suffix}", "-task", "blastn-short", "-query", f"{query}", "-db", f"{BLAST_db_path}", "-max_hsps", "2000", "-num_threads", f"{numThread2use}", "-perc_identity", "75", "-outfmt", "6 qseqid sseqid qstart qend sstart send pident mismatch", "-out", f"{query}.out"]
-        p = Popen(cmd, universal_newlines=True)
-        p.communicate()  # now wait for the process to finish
-        os.remove(tmp_fa)
 
-        #pre-parse blast out, remove primers with too many hits in the genome
+        if aligner == "BLAST" :
+            #blast
+            # check blastDB (human) and also return BLAST bin directory
+            BLAST_bin, exe_suffix, BLAST_db_path = check_blastDB(ref)
+            # print(BLAST_bin)
+            # print(exe_suffix)
+            # print(BLAST_db_path)
+            # specify BLAST db and query
+            query = tmp_fa
+            # start BLAST
+            cmd = [f"{BLAST_bin}blastn{exe_suffix}", "-task", "blastn-short", "-query", f"{query}", "-db", f"{BLAST_db_path}", "-max_hsps", "2000", "-num_threads", f"{numThread2use}", "-perc_identity", "75", "-outfmt", "6 qseqid sseqid qstart qend sstart send pident mismatch", "-out", f"{query}.out"]
+            p = Popen(cmd, universal_newlines=True)
+            p.communicate()  # now wait for the process to finish
+            os.remove(tmp_fa)
+        elif aligner == "Bowtie2":
+            BLAST_bin, exe_suffix, BLAST_db_path = check_BowtieIndex(ref)
+        else:
+            sys.exit(f"[ERROR] Invalid choice of aligner: {aligner}")
+
+        #pre-parse alignment out, remove primers with too many hits in the genome
         uniq_cout = f"{query}.out.uniq_count"
         with open(uniq_cout, "w") as f, open(f"{query}.out", "r") as i:
             uniq_count = dict()

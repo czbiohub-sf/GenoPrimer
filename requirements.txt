@@ -1,4 +1,16 @@
-Bio==1.3.3
-pandas==1.3.5
-primer3_py==0.6.1
-requests==2.27.1
+name: GenoPrimer
+channels:
+  - conda-forge
+  - bioconda
+  - default
+  - defaults
+dependencies:
+
+  - pandas==1.3.5
+  - requests==2.27.1
+  - pip
+  - pip:
+    - biopython==1.78
+    - primer3_py==0.6.1
+
+prefix: /home/duo.peng/miniconda3/envs/GenoPrimer

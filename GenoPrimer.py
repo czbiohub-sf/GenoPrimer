@@ -22,17 +22,25 @@ def parse_args():
     parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', metavar='')
     parser.add_argument('--type', default="short", type=str, help='short:300-350bp, long: 3.5kb', metavar='')
     parser.add_argument('--thread', default="auto", type=str, help='auto or an integer, auto = use max-2', metavar='')
-    parser.add_argument('--outdir', default="out", type=str, help='name of the output directory', metavar='')
+    parser.add_argument('--outdir', default="out", type=str, help='name of the output directory relative to GenoPrimer.py', metavar='')
     #parser.add_argument('--genome', default="ensembl_GRCh38_latest", type=str, help='other accepted values are: NCBI_refseq_GRCh38.p14', metavar='')
     parser.add_argument('--db', default="Ensembl", type=str, help='name of the output directory', metavar='')
+    parser.add_argument('--oneliner_input', default="", type=str, help='ref,chr,coordinate.  Example: ensembl_GRCh38_latest,20,17482068', metavar='')
     config = parser.parse_args()
     if len(sys.argv)==1: # print help message if arguments are not valid
         parser.print_help()
         sys.exit(1)
     return config
 
+#change working directory to the script directory
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
+#configs
 config = vars(parse_args())
 outdir = config['outdir']
+oneliner = config["oneliner_input"]
 num_primer_return = 3
 num_primers_from_Primer3 = 397 + num_primer_return
 
@@ -58,31 +66,40 @@ log.setLevel(logging.INFO) #set the level of warning displayed
 
 #####################
 ##      main       ##
-#####################    
+#####################
 def main():
     try:
-        #check input
-        if config["csv"] is None or config["csv"] == "":
-            log.error(f"need to specify an input csv file")
-            sys.exit("Please fix the error(s) above and rerun the script")
+        if oneliner == "":
+            #check csv input
+            if config["csv"] is None or config["csv"] == "":
+                log.error(f"need to specify an input csv file")
+                sys.exit("Please fix the error(s) above and rerun the script")
 
-        #read input csv file
-        df = pd.read_csv(os.path.join(config['csv']))
-        #convert genome string to be recognizable 
-        df['ref'] = df['ref'].apply(get_genome_string)
+            #read input csv file
+            df = pd.read_csv(os.path.join(config['csv']))
+            #convert genome string to be recognizable
+            df['ref'] = df['ref'].apply(get_genome_string)
 
-        must_have_cols1 = ["ref", "chr", "coordinate"]
-        flag1 = all(col in df.columns for col in must_have_cols1)
-        must_have_cols2 = ["ref","mapping:Ensemble_chr","mapping:gRNACut_in_chr"]
-        flag2 = all(col in df.columns for col in must_have_cols2)
+            must_have_cols1 = ["ref", "chr", "coordinate"]
+            flag1 = all(col in df.columns for col in must_have_cols1)
+            must_have_cols2 = ["ref","mapping:Ensemble_chr","mapping:gRNACut_in_chr"]
+            flag2 = all(col in df.columns for col in must_have_cols2)
 
-        if (flag1 or flag2) == False:
-            log.error(f"The csv file does not contain all the required columns: [ref, chr, coordinate] or [ref, mapping:Ensemble_chr, mapping:gRNACut_in_chr]")
-            sys.exit("Please fix the error(s) above and rerun the script")
-        #make a copy of the input to the output folder
-        if not os.path.isfile(os.path.join(outdir,"input.csv")):
-            shutil.copyfile(os.path.join(config['csv']), os.path.join(outdir,"input.csv"))
-        
+            if (flag1 or flag2) == False:
+                log.error(f"The csv file does not contain all the required columns: [ref, chr, coordinate] or [ref, mapping:Ensemble_chr, mapping:gRNACut_in_chr]")
+                sys.exit("Please fix the error(s) above and rerun the script")
+            #make a copy of the input to the output folder
+            if not os.path.isfile(os.path.join(outdir,"input.csv")):
+                shutil.copyfile(os.path.join(config['csv']), os.path.join(outdir,"input.csv"))
+        else:
+            #one-liner input
+            df = pd.DataFrame([[oneliner.split(',')[0], oneliner.split(',')[1], oneliner.split(',')[2]]], columns=["ref", "chr", "coordinate"])
+
+            must_have_cols1 = ["ref", "chr", "coordinate"]
+            flag1 = all(col in df.columns for col in must_have_cols1)
+            must_have_cols2 = ["ref","mapping:Ensemble_chr","mapping:gRNACut_in_chr"]
+            flag2 = all(col in df.columns for col in must_have_cols2)
+
         #make output dir
         mkdir(outdir)
 
@@ -99,6 +116,7 @@ def main():
             with open(os.path.join(outdir,f"log.txt"), "w") as fhlog:
                 #go over each cutsite
                 for index, row in df.iterrows():
+                    starttime1 = datetime.datetime.now()
                     if flag1:
                         ref = row["ref"]
                         Chr = row["chr"]
@@ -166,6 +184,11 @@ def main():
                     cutsite_count += 1
                     gc.collect()
 
+                    endtime1 = datetime.datetime.now()
+                    elapsed_sec = endtime1 - starttime1
+                    elapsed_min = elapsed_sec.seconds / 60
+                    log.info(f"elapsed {elapsed_min:.2f} min")
+
                     if cutsite_count%10==0 and cutsite_count!=0:
                         endtime = datetime.datetime.now()
                         elapsed_sec = endtime - starttime
@@ -196,7 +219,7 @@ def PrintException():
     linecache.checkcache(filename)
     line = linecache.getline(filename, lineno, f.f_globals)
     print('EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj))
-    
+
 def mkdir(mypath):
     if not os.path.exists(mypath):
         os.makedirs(mypath)
@@ -212,4 +235,4 @@ def get_genome_string(ver):
             return f"NCBI_refseq_{ver}.p14"
     return ver
 
-if __name__ == "__main__": main()    
+if __name__ == "__main__": main()
