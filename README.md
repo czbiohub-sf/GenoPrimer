@@ -14,7 +14,7 @@ Automated primer design for genotyping CRISPR edited cells via amplicon sequenci
 
 ## Inputs
 
-- A csv file containing minimumlly three columns (with the exact names):
+- A csv file containing minimumlly three columns (with the exact names), each row is a separate design:
   - **ref**  
       The genome/build version, takes two possible values: ensembl_GRCh38_latest or NCBI_refseq_GRCh38.p14  
   - **chr**  
