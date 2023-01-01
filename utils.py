@@ -45,11 +45,18 @@ def check_genome_chr_fasta(chromosome, genome):
         if genome == "ensembl_GRCh38_latest":
             fa = "Homo_sapiens.GRCh38.dna.primary_assembly.fa"
             prefix = "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/"
+        elif genome == "ensembl_GRCm39_latest":
+            fa = "Mus_musculus.GRCm39.dna.primary_assembly.fa"
+            prefix = "https://ftp.ensembl.org/pub/release-108/fasta/mus_musculus/dna/"
+        elif genome == "ensembl_GRCz11_latest":
+            fa = "Danio_rerio.GRCz11.dna.primary_assembly.fa"
+            prefix = "https://ftp.ensembl.org/pub/release-108/fasta/danio_rerio/dna/"
         elif genome == "NCBI_refseq_GRCh38.p14":
             fa = "GCF_000001405.40_GRCh38.p14_genomic.fna"
             prefix = "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/reference/GCF_000001405.40_GRCh38.p14/"
         else:
-            sys.exit(f"invalid genome/ref:{genome}, possible values are: ensembl_GRCh38_latest and NCBI_refseq_GRCh38.p14")
+            sys.exit(f"invalid genome/ref:{ref}, possible values are: ensembl_GRCh38_latest, ensembl_GRCm39_latest, ensembl_GRCz11_latest and NCBI_refseq_GRCh38.p14")
+
         url = prefix + fa + ".gz"
         fa_gz_path = os.path.join("BLAST_databases", genome, f"{fa}.gz")
         fa_path = os.path.join("BLAST_databases", genome, f"{fa}")
