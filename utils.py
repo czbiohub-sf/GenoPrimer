@@ -130,8 +130,8 @@ def get_ensembl_sequence(chromosome,region_left,region_right,species,expand=0):
 
 def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_size, ref, chr, cut_coord, min_dist2center, num_primers_from_Primer3, thread, fhlog, outdir):
     """
-    :param prod_size_lower:   product size upper bound
-    :param prod_size_upper:   product size lower bound
+    :param prod_size_lower:   product size lower bound
+    :param prod_size_upper:   product size upper bound
     :param num_return: int, number of primers to return
 
     :return:
@@ -143,6 +143,8 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
     max_n_pairs_primer = 800
 
     min_dist2center = min_dist2center
+
+    prod_size_upper = min([len(inputSeq), prod_size_upper])  #product size can't be longer than the length of the input seq. In long mode, some times there weren't enough template sequence
 
     #create dicts as inputs for primer3
     thermo_dict = get_default_thermo_dict()
