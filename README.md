@@ -33,8 +33,7 @@ See the usage section for more details
   -  A numeric number indicating how many rounds of criteria relaxation before yielding primers (column "Rounds_relax_of_primer_criteria")
 
 ## Automated workflow (for one site) 
-<img width="1027" alt="image" src="https://user-images.githubusercontent.com/4129442/154752321-14e3f6c9-0a4c-435a-8c46-99d1a0893356.png">
-
+![image](https://github.com/czbiohub/GenoPrimer/assets/4129442/a9fdc850-a144-4cd3-9d69-82e86ce69627)
 
 &nbsp;
 ## Usage:
