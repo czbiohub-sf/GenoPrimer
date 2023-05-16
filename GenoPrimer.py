@@ -147,6 +147,18 @@ def main():
                     log.info(f"({index+1}/{len(df.index)}) Processing cutsite:  Genome:{ref}, Chr:{Chr}, cut_coordinate: {coordinate}")
                     fhlog.write(f"({index+1}/{len(df.index)}) Processing cutsite: Genome:{ref}, Chr:{Chr}, cut_coordinate: {coordinate}\n")
 
+                    #search for precomputed primers, end current iteration if found
+                    precomputed_res = search_precomputed_results(res_dir_base = "precomputed_primers", PrimerMode = config['type'], Genome = ref, Chr = Chr, Coordinate = coordinate)
+                    if precomputed_res is not None:
+                        outcsv.write(precomputed_res)
+                        cutsite_count += 1
+                        primer_count += 3 #TODO fix this inaccurate number
+                        good_primer_count += 3 #TODO fix this inaccurate number
+                        log.info(f"found precomputed primers, skip calculation for this site")
+                        fhlog.write(f"found precomputed primers, skip calculation for this site")
+                        continue
+
+                    #proceed to compute primers
                     #get sequence from chromosome, get 150bp extra on each side, will progressively include in considered zone if no primers were found
                     amp_st = str(int(int(coordinate) - int(amp_len)/2) - step_size*3 ) # buffer zone = step_size*3 bp
                     amp_en = str(int(int(coordinate) + int(amp_len)/2) + step_size*3 ) # buffer zone = step_size*3 bp
@@ -234,5 +246,32 @@ def get_genome_string(ver):
         if config["db"] == "NCBI":
             return f"NCBI_refseq_{ver}.p14"
     return ver
+
+def closest_idx(lst, K):
+    return min(range(len(lst)), key = lambda i: abs(lst[i]-K))
+
+def search_precomputed_results(res_dir_base = "precomputed_primers", PrimerMode = "short", Genome = "GRCh38", Chr = "", Coordinate = ""):
+    Genome = Genome.rstrip("_latest").lstrip("ensembl_")
+    result_by_chr_dir = os.path.join(res_dir_base,PrimerMode,f"ensembl_{Genome}_latest",str(Chr))
+    if os.path.isdir(result_by_chr_dir):
+        list_of_locsDIR = os.listdir(result_by_chr_dir)
+        list_of_locs = [int(i.split("_")[0]) for i in list_of_locsDIR]
+        res_dir = list_of_locsDIR[closest_idx(list_of_locs,int(Coordinate))]
+        offset = abs(int(res_dir.split("_")[0]) - int(Coordinate)) 
+        #print(offset)
+        if offset <= 20 : # allow the target site and the precomputed site to be off by 20bp
+            res_file = os.path.join(result_by_chr_dir, res_dir, "out.csv")
+            if os.path.isfile(res_file):
+                with open(res_file, 'r') as f: # read the precomputed results
+                    header = f.readline()
+                    result = f.readline()
+                col_count_res = len(result.split(","))
+                if col_count_res >= 9: #check if the result is valid
+                    fields = result.split(",")
+                    fields[2] = str(Coordinate) # change the site in the result to the target site
+                    result = ",".join(fields) 
+                    return result
+    return None
+
 
 if __name__ == "__main__": main()

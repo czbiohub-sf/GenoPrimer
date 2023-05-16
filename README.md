@@ -55,7 +55,7 @@ conda env create -f environment.yml
 You are ready to run GenoPrimer
 ```
 conda activate GenoPrimer
-python GenoPrimer.py --csv test_data/input_example.csv --type "short"
+python GenoPrimer.py --csv input/example.csv --type "short"
 ```
 Notes:  
 (1) During first-time run, the program will download the human genome and generate Blast databases  
