@@ -35,3 +35,5 @@ slurm.out
 *.uniq_count
 !BLAST_databases
 BLAST_databases/*
+precomputed_primers
+out
