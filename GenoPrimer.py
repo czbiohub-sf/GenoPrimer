@@ -25,6 +25,7 @@ def parse_args():
     parser.add_argument('--outdir', default="out", type=str, help='name of the output directory relative to GenoPrimer.py', metavar='')
     #parser.add_argument('--genome', default="ensembl_GRCh38_latest", type=str, help='other accepted values are: NCBI_refseq_GRCh38.p14', metavar='')
     parser.add_argument('--db', default="Ensembl", type=str, help='name of the output directory', metavar='')
+    parser.add_argument('--min_dist2edit', default = 101, type=int, help='minimum distance to the edit site', metavar='')
     parser.add_argument('--oneliner_input', default="", type=str, help='ref,chr,coordinate.  Example: ensembl_GRCh38_latest,20,17482068', metavar='')
     config = parser.parse_args()
     if len(sys.argv)==1: # print help message if arguments are not valid
@@ -41,22 +42,26 @@ os.chdir(dname)
 config = vars(parse_args())
 outdir = config['outdir']
 oneliner = config["oneliner_input"]
+min_dist2center_from_user = config["min_dist2edit"]
 num_primer_return = 3
 num_primers_from_Primer3 = 397 + num_primer_return
 
 #default settings for MiSeq
-amp_len = 300
-prod_size_lower = 230
-prod_size_upper = 280
-step_size = 30
+prod_size_lower = 250
+prod_size_upper = 350
+step_size = 40
 min_dist2center = 100
 
 if config['type'] == "long":
-    amp_len = 4200
     prod_size_lower = 3300
     prod_size_upper = 3700
-    step_size = 100
+    step_size = 150
     min_dist2center = 1000
+
+# set minimum distance to edit site if a non-default value is detected
+if min_dist2center_from_user != 101: 
+    min_dist2center = min_dist2center_from_user
+
 
 logging.setLoggerClass(ColoredLogger)
 #logging.basicConfig()
@@ -159,9 +164,9 @@ def main():
                         continue
 
                     #proceed to compute primers
-                    #get sequence from chromosome, get 150bp extra on each side, will progressively include in considered zone if no primers were found
-                    amp_st = str(int(int(coordinate) - int(amp_len)/2) - step_size*3 ) # buffer zone = step_size*3 bp
-                    amp_en = str(int(int(coordinate) + int(amp_len)/2) + step_size*3 ) # buffer zone = step_size*3 bp
+                    #get sequence from chromosome, get (stepsize) bp extra on each side, will progressively include in considered zone if no primers were found
+                    amp_st = str(int(int(coordinate) - int(prod_size_upper)/2) - step_size*3 ) # buffer zone = step_size*3 bp
+                    amp_en = str(int(int(coordinate) + int(prod_size_upper)/2) + step_size*3 ) # buffer zone = step_size*3 bp
                     chr_region = get_sequence(chromosome = str(Chr), region_left = amp_st, region_right = amp_en, genome = ref, expand=0) #switched from get_ensembl_sequence() to get_sequence()
 
                     #design primer
@@ -266,11 +271,12 @@ def search_precomputed_results(res_dir_base = "precomputed_primers", PrimerMode 
                     header = f.readline()
                     result = f.readline()
                 col_count_res = len(result.split(","))
-                if col_count_res >= 9: #check if the result is valid
+                if col_count_res >= 9: #for valid results, change the site to the target site
                     fields = result.split(",")
                     fields[2] = str(Coordinate) # change the site in the result to the target site
                     result = ",".join(fields) 
-                    return result
+                #no need to filter out cases where primers are not found
+                return result
     return None
 
 
