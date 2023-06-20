@@ -20,13 +20,14 @@ class MyParser(argparse.ArgumentParser):
 def parse_args():
     parser= MyParser(description='This script designs primers around the gRNA cut site')
     parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', metavar='')
-    parser.add_argument('--type', default="short", type=str, help='short:300-350bp, long: 3.5kb', metavar='')
+    parser.add_argument('--type', default="short", type=str, help='amplicon size, short:300-350bp, long: 3.5kb, default is short', metavar='')
     parser.add_argument('--thread', default="auto", type=str, help='auto or an integer, auto = use max-2', metavar='')
     parser.add_argument('--outdir', default="out", type=str, help='name of the output directory relative to GenoPrimer.py', metavar='')
     #parser.add_argument('--genome', default="ensembl_GRCh38_latest", type=str, help='other accepted values are: NCBI_refseq_GRCh38.p14', metavar='')
     parser.add_argument('--db', default="Ensembl", type=str, help='name of the output directory', metavar='')
     parser.add_argument('--min_dist2edit', default = 101, type=int, help='minimum distance to the edit site', metavar='')
     parser.add_argument('--oneliner_input', default="", type=str, help='ref,chr,coordinate.  Example: ensembl_GRCh38_latest,20,17482068', metavar='')
+    parser.add_argument('--aligner', default="Bowtie", type=str, help='program to align primers to the genome to check non-specific amplifications, default is Bowtie. other options: BLAST', metavar='')
     config = parser.parse_args()
     if len(sys.argv)==1: # print help message if arguments are not valid
         parser.print_help()
@@ -62,6 +63,9 @@ if config['type'] == "long":
 if min_dist2center_from_user != 101: 
     min_dist2center = min_dist2center_from_user
 
+# outdir
+if not os.path.isdir(outdir):
+    os.makedirs(outdir)
 
 logging.setLoggerClass(ColoredLogger)
 #logging.basicConfig()
@@ -167,7 +171,7 @@ def main():
                     #get sequence from chromosome, get (stepsize) bp extra on each side, will progressively include in considered zone if no primers were found
                     amp_st = str(int(int(coordinate) - int(prod_size_upper)/2) - step_size*3 ) # buffer zone = step_size*3 bp
                     amp_en = str(int(int(coordinate) + int(prod_size_upper)/2) + step_size*3 ) # buffer zone = step_size*3 bp
-                    chr_region = get_sequence(chromosome = str(Chr), region_left = amp_st, region_right = amp_en, genome = ref, expand=0) #switched from get_ensembl_sequence() to get_sequence()
+                    chr_region = get_sequence(chromosome = str(Chr), region_left = amp_st, region_right = amp_en, genome = ref, aligner = config["aligner"]) #switched from get_ensembl_sequence() to get_sequence()
 
                     #design primer
                     primerlist, relaxation_count, good_primer_num = get_primers(inputSeq = str(chr_region),
@@ -182,7 +186,8 @@ def main():
                                              num_primers_from_Primer3 = num_primers_from_Primer3,
                                              thread = config["thread"],
                                              fhlog = fhlog,
-                                             outdir = outdir)
+                                             outdir = outdir,
+                                             aligner = config["aligner"],)
 
                     #process primers found
                     if primerlist is None: #no primers found
