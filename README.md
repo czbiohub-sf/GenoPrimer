@@ -7,8 +7,8 @@ Automated primer design for genotyping CRISPR edited cells via amplicon sequenci
 - Two modes: short (250 bp amplicon, MiSeq) and long (~3000 bp amplicon, PacBio)
 - Automatically relaxes the criteria if no primers are found initially
 - Invokes primer3 to perform thermodynamics calculation
-- Use Blast to check unintended PCR products 
-  - Autodetects OS and use matching Blast executables for Linux, MacOS, Windows
+- Use Bowtie (alternatively BLAST) to check unintended PCR products
+  - Autodetects OS and use matching executables for Linux, MacOS, Windows
   - Autodetects CPU number and multi-threads Blast search ( saves 2 CPUs for the user)
 - Automatically downloads and uses the human genome by default
 
@@ -33,7 +33,8 @@ See the usage section for more details
   -  A numeric number indicating how many rounds of criteria relaxation before yielding primers (column "Rounds_relax_of_primer_criteria")
 
 ## Automated workflow (for one site) 
-![image](https://github.com/czbiohub/GenoPrimer/assets/4129442/a9fdc850-a144-4cd3-9d69-82e86ce69627)
+![image](https://github.com/czbiohub-sf/GenoPrimer/assets/4129442/e82970ee-bcef-409e-84f4-0b8507dd5040)
+
 
 &nbsp;
 ## Usage:
@@ -58,10 +59,10 @@ conda activate GenoPrimer
 python GenoPrimer.py --csv input/example.csv --type "short"
 ```
 Notes:  
-(1) During first-time run, the program will download the human genome and generate Blast databases  
-(2) In some OS, It may be required to grant permission to Blast excutables, for example:
+(1) During first-time run, the program will download the human genome and generate Bowtie databases  
+(2) In some OS, It may be required to grant permission to Bowtie executables, for example:
 ```
-chmod a+xX bin/ncbi-blast-2.12.0+-x64-linux/bin/*
+chmod a+xX bin/bowtie-1.3.1-linux-x86_64/*
 ```
 
 ### Helper script
