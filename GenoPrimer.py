@@ -21,7 +21,7 @@ def parse_args():
     parser= MyParser(description='This script designs primers around the gRNA cut site')
     parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', metavar='')
     parser.add_argument('--type', default="short", type=str, help='amplicon size, short:300-350bp, long: 3.5kb, default is short', metavar='')
-    parser.add_argument('--thread', default="auto", type=str, help='auto or an integer, auto = use max-2', metavar='')
+    parser.add_argument('--thread', default="4", type=str, help='auto or an integer, auto = use max-2', metavar='')
     parser.add_argument('--outdir', default="out", type=str, help='name of the output directory relative to GenoPrimer.py', metavar='')
     #parser.add_argument('--genome', default="ensembl_GRCh38_latest", type=str, help='other accepted values are: NCBI_refseq_GRCh38.p14', metavar='')
     parser.add_argument('--db', default="Ensembl", type=str, help='name of the output directory', metavar='')

@@ -107,7 +107,7 @@ def check_unintended_products(dict_primers, len_input, ref, cut_chr , cut_coord,
             query = tmp_fa
             # run Bowtie
             with open(f"{query}.out", "w") as outfile:
-                cmd = [f"{Bowtie_bin}bowtie{exe_suffix}", "-f", "-k", "1000", "-v", "3", "--threads", "4", "--suppress", "5,6", "--quiet", "-x", f"{Bowtie_idx_path}", f"{query}"]
+                cmd = [f"{Bowtie_bin}bowtie{exe_suffix}", "-f", "-k", "1000", "-v", "3", "--threads", f"{numThread2use}", "--suppress", "5,6", "--quiet", "-x", f"{Bowtie_idx_path}", f"{query}"]
                 p = Popen(cmd, universal_newlines=True, stdout=outfile, stderr=DEVNULL)
                 p.communicate()  # now wait for the process to finish
                 os.remove(tmp_fa)
