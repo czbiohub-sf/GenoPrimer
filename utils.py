@@ -32,16 +32,20 @@ def check_gzip_integrity(filepath):
         except:
             return False #file corrupted
 
-def check_genome_chr_fasta(chromosome, genome):
+def check_genome_chr_fasta(chromosome, genome, aligner):
     '''
     check if a fasta file under the path genome/chromosome exists
     if not download the genome file and split the fa file based on chromosomes
     '''
-    target_file_path = os.path.join("BLAST_databases",genome,f"{chromosome}.fa")
+    if aligner == "Bowtie":
+        aligner_db = "Bowtie_indices"
+    elif aligner == "BLAST":
+        aligner_db = "BLAST_databases"
+    target_file_path = os.path.join(aligner_db,genome,f"{chromosome}.fa")
     if os.path.isfile(target_file_path):
         return target_file_path
     else: #download the genome
-        print(f"Could not find {chromosome}.fa in BLAST_databases/{genome}/, automatically generating reference genome files", flush=True)
+        print(f"Could not find {chromosome}.fa in {aligner_db}/{genome}/, automatically generating reference genome files", flush=True)
         if genome == "ensembl_GRCh38_latest":
             fa = "Homo_sapiens.GRCh38.dna.primary_assembly.fa"
             prefix = "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/"
@@ -58,11 +62,11 @@ def check_genome_chr_fasta(chromosome, genome):
             sys.exit(f"invalid genome/ref:{ref}, possible values are: ensembl_GRCh38_latest, ensembl_GRCm39_latest, ensembl_GRCz11_latest and NCBI_refseq_GRCh38.p14")
 
         url = prefix + fa + ".gz"
-        fa_gz_path = os.path.join("BLAST_databases", genome, f"{fa}.gz")
-        fa_path = os.path.join("BLAST_databases", genome, f"{fa}")
+        fa_gz_path = os.path.join(f"{aligner_db}", genome, f"{fa}.gz")
+        fa_path = os.path.join(f"{aligner_db}", genome, f"{fa}")
         #check directory
-        if not os.path.isdir(os.path.join("BLAST_databases",genome)):
-            os.makedirs(os.path.join("BLAST_databases",genome))
+        if not os.path.isdir(os.path.join(f"{aligner_db}",genome)):
+            os.makedirs(os.path.join(f"{aligner_db}",genome))
         # check if the gz file exists, and also check integrity
         # Download the file from `url` and save it locally under `file_name`:
         if not check_gzip_integrity(fa_gz_path): #check gzip file integrity
@@ -83,17 +87,17 @@ def check_genome_chr_fasta(chromosome, genome):
             fasta_sequences = SeqIO.parse(handle,'fasta')
             for entry in fasta_sequences:
                 name, desc, seq = entry.id, entry.description, str(entry.seq)
-                chr_fa_path = os.path.join("BLAST_databases", genome, f"{name}.fa")
+                chr_fa_path = os.path.join(f"{aligner_db}", genome, f"{name}.fa")
                 with open(chr_fa_path, "w") as wfh:
                     wfh.write(f">{name}\n{seq}\n")
         #remove intermediate files
-        #os.remove(fa_gz_path)  # save the gz file for making BLAST database
-        os.remove(fa_path)
+        #os.remove(fa_gz_path)  # save the gz file for making BLAST database or Bowtie indices
+        os.remove(fa_path) # remove the unzipped file
         print(f"Finished generating reference genome files (this is a one-time process)")
         return target_file_path
 
-def get_sequence(chromosome,region_left,region_right,genome,expand=0):
-    chr_fa_path = check_genome_chr_fasta(chromosome, genome)
+def get_sequence(chromosome,region_left,region_right,genome,aligner):
+    chr_fa_path = check_genome_chr_fasta(chromosome, genome, aligner)
     with open(chr_fa_path, "r") as handle:
         fasta_obj = next(SeqIO.parse(handle,'fasta')) #there is only one seq in the fasta file
         sequence = str(fasta_obj.seq)
@@ -128,7 +132,7 @@ def get_ensembl_sequence(chromosome,region_left,region_right,species,expand=0):
     sequence = Seq(r.text)
     return sequence
 
-def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_size, ref, chr, cut_coord, min_dist2center, num_primers_from_Primer3, thread, fhlog, outdir):
+def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_size, ref, chr, cut_coord, min_dist2center, num_primers_from_Primer3, thread, fhlog, outdir, aligner):
     """
     :param prod_size_lower:   product size lower bound
     :param prod_size_upper:   product size upper bound
@@ -175,7 +179,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
         User_dict1,
         {**thermo_dict, **User_dict2}) # these two dicts needs to be merged
     #check unintended products
-    dict_primers = check_unintended_products(dict_primers = dict_primers, len_input = prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog, outdir = outdir)
+    dict_primers = check_unintended_products(dict_primers = dict_primers, len_input = prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog, outdir = outdir, aligner = aligner)
     nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
     #get primer number
@@ -190,7 +194,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
         # design primers
         dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
         # check unintended products
-        dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr=chr, cut_coord=cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog, outdir=outdir )
+        dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr=chr, cut_coord=cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog, outdir=outdir, aligner = aligner )
         nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
         # get primer number
@@ -214,7 +218,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
 
             dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
             # check unintended products
-            dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog, outdir=outdir )
+            dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog, outdir=outdir, aligner = aligner )
             nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
             # get primer number
@@ -230,7 +234,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
                 #design primers
                 dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
                 # check unintended products
-                dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers,thread = thread,  fhlog = fhlog, outdir=outdir )
+                dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers,thread = thread,  fhlog = fhlog, outdir=outdir, aligner = aligner )
                 nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
                 # get primer number
@@ -245,7 +249,7 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
         User_dict1, User_dict2 = relax_dist2center(User_dict1 = User_dict1, User_dict2 = User_dict2, length_closer_tocenter = length_closer_tocenter)
         dict_primers = primer3.bindings.designPrimers(User_dict1, {**thermo_dict, **User_dict2})
         # check unintended products
-        dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog, outdir=outdir )
+        dict_primers = check_unintended_products(dict_primers=dict_primers, len_input=prod_size_upper, ref = ref, cut_chr = chr, cut_coord = cut_coord, nonspecific_primers=nonspecific_primers, thread = thread, fhlog = fhlog, outdir=outdir, aligner = aligner )
         nonspecific_primers = populate_nonspecific_primer_list(dict_primers, nonspecific_primers)
 
         # get primer number

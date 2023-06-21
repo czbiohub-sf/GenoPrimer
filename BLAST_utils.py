@@ -60,7 +60,7 @@ def check_blastDB(ref):
 
 
     BLAST_db = fa + f".{thisSystem}" #make a separate db for each os system
-    BLAST_db_path = os.path.join(BLASTDB_DIR, BLAST_db)
+    BLAST_db_path = os.path.join(BLASTDB_DIR, ref, BLAST_db)
 
     fa_gz = fa + ".gz"
     fa_gz_path = os.path.join(BLASTDB_DIR, ref, fa_gz)
@@ -82,6 +82,8 @@ def check_blastDB(ref):
             print(f"...(re)downloading {fa_gz_path} sequence file, (this may take several minutes, if your internet connection is spotty, the download may fail and display an error mentioning an unexpected end of the stream)", flush=True)
             if os.path.isfile(fa_gz_path): #remove gzip file, b/c it could be a partial file
                 os.remove(fa_gz_path)
+            if not os.path.isdir(os.path.dirname(fa_gz_path)):
+                os.mkdir(os.path.dirname(fa_gz_path))
             with urllib.request.urlopen(url) as response, open(fa_gz_path, 'wb') as out_file: #download gzip file
                 shutil.copyfileobj(response, out_file)
 
@@ -103,3 +105,8 @@ def check_blastDB(ref):
         os.remove(BLAST_db_path)
         print(f"Finished generating BLAST databases, this is a one-time process)", flush=True)
     return([BLAST_bin, exe_suffix, BLAST_db_path])
+
+if __name__ == "__main__":
+    check_blastDB("ensembl_GRCh38_latest")
+    check_blastDB("ensembl_GRCm39_latest")
+    check_blastDB("ensembl_GRCz11_latest")
