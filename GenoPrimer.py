@@ -18,8 +18,8 @@ class MyParser(argparse.ArgumentParser):
         sys.exit(2)
 
 def parse_args():
-    parser= MyParser(description='This script designs primers around the gRNA cut site')
-    parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', metavar='')
+    parser= MyParser(description='GenoPrimer')
+    parser.add_argument('--csv', default="", type=str, help='path to a csv file containing three columns: ref, chr and coordinate. For details see https://github.com/czbiohub-sf/GenoPrimer#inputs, for examples, see input/example.csv', metavar='')
     parser.add_argument('--type', default="short", type=str, help='amplicon size, short:300-350bp, long: 3.5kb, default is short', metavar='')
     parser.add_argument('--thread', default="4", type=str, help='auto or an integer, auto = use max-2', metavar='')
     parser.add_argument('--outdir', default="out", type=str, help='name of the output directory relative to GenoPrimer.py', metavar='')
@@ -159,7 +159,10 @@ def main():
                     #search for precomputed primers, end current iteration if found
                     precomputed_res = search_precomputed_results(res_dir_base = "precomputed_primers", PrimerMode = config['type'], Genome = ref, Chr = Chr, Coordinate = coordinate)
                     if precomputed_res is not None:
-                        outcsv.write(precomputed_res)
+                        #remove the first three colums and replace with the input dataframe
+                        csvrow = [str(item) for item in row]
+                        res2write = ",".join(csvrow) + "," + ",".join(precomputed_res.split(",")[3:])
+                        outcsv.write(res2write)
                         cutsite_count += 1
                         primer_count += 3 #TODO fix this inaccurate number
                         good_primer_count += 3 #TODO fix this inaccurate number
