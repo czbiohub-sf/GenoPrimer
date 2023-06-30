@@ -317,6 +317,7 @@ def get_default_thermo_dict():
             'PRIMER_OPT_TM': 60.0,
             'PRIMER_MIN_TM': 57.0,
             'PRIMER_MAX_TM': 63.0,
+            'PRIMER_MAX_DIFF_TM': 3,
             'PRIMER_MIN_GC': 20.0,
             'PRIMER_MAX_GC': 80.0,
             'PRIMER_MAX_POLY_X': 100,
@@ -332,11 +333,13 @@ def get_default_thermo_dict():
 
 def relax_MIN_MAX_TM(thermo_dict):
     """
-    decrease PRIMER_MIN_TM by 1
-    increase PRIMER_MAX_TM by 1
+    decrease PRIMER_MIN_TM by 0.5
+    increase PRIMER_MAX_TM by 0.5
+    increase the max TM difference by 1
     :param thermo_dict:
     :return: thermo_dict
     """
+    thermo_dict['PRIMER_MAX_DIFF_TM'] += 1
     thermo_dict['PRIMER_MIN_TM'] -= 0.5
     thermo_dict['PRIMER_MAX_TM'] += 0.5
     return thermo_dict
