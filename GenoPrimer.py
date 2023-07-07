@@ -172,8 +172,8 @@ def main():
 
                     #proceed to compute primers
                     #get sequence from chromosome, get (stepsize) bp extra on each side, will progressively include in considered zone if no primers were found
-                    amp_st = str(int(int(coordinate) - int(prod_size_upper)/2) - step_size*3 ) # buffer zone = step_size*3 bp
-                    amp_en = str(int(int(coordinate) + int(prod_size_upper)/2) + step_size*3 ) # buffer zone = step_size*3 bp
+                    amp_st = str(int(int(coordinate) - int(prod_size_upper)/2) - step_size*4 ) # buffer zone = step_size*4 bp
+                    amp_en = str(int(int(coordinate) + int(prod_size_upper)/2) + step_size*4 ) # buffer zone = step_size*4 bp
                     chr_region = get_sequence(chromosome = str(Chr), region_left = amp_st, region_right = amp_en, genome = ref, aligner = config["aligner"]) #switched from get_ensembl_sequence() to get_sequence()
 
                     #design primer

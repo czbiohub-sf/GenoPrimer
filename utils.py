@@ -156,9 +156,9 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
     User_dict1={
             'SEQUENCE_ID': 'inputSeq',
             'SEQUENCE_TEMPLATE': inputSeq,
-            'SEQUENCE_EXCLUDED_REGION': [[1,3*step_size],
-                                         [math.floor(len(inputSeq)/2) - min_dist2center, 2*min_dist2center],
-                                         [len(inputSeq)-3*step_size-1, 3*step_size]]
+            'SEQUENCE_EXCLUDED_REGION': [[1,3*step_size], #start coordinate, length
+                                         [math.floor(len(inputSeq)/2) - min_dist2center, 2*min_dist2center], #start coordinate, length
+                                         [len(inputSeq)-3*step_size-1, 3*step_size]] #start coordinate, length
             #'SEQUENCE_PRIMER_PAIR_OK_REGION_LIST ': [[1 + step_size*3,                                                                    #Forward primer region start
             #                                         math.floor(len(inputSeq)/2) - min_dist2center - 1 - step_size*3,                     #Forward primer region length
             #                                         math.floor(len(inputSeq)/2) + min_dist2center,                                       #Reverse primer region start
