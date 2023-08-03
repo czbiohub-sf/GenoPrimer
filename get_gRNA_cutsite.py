@@ -27,6 +27,7 @@ class MyParser(argparse.ArgumentParser):
 def parse_args():
     parser= MyParser(description='This script maps gRNA sequence to the genome to determine cutsite coordinates')
     parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', metavar='')
+    parser.add_argument('--noPAM', action='store_true', help='Ignore the requirement of a PAM following the protospacer sequence')
     config = parser.parse_args()
     if len(sys.argv)==1: # print help message if arguments are not valid
         parser.print_help()
@@ -59,7 +60,7 @@ def main():
         ENST_info = load_ENST_info()
 
         with open(os.path.join(f"{config['csv'].rstrip('csv')}coord.csv"), 'w') as outcsv, open(os.path.join(f"{config['csv'].rstrip('csv')}coord.log.txt"), 'w') as outlog:
-            outcsv.write(",".join(list(df.columns) + ["mapping:Ensemble_chr","mapping:gRNACut_in_chr","mapping:ID","mapping:Gene_name"])) #header
+            outcsv.write(",".join(list(df.columns) + ["mapping:Ensemble_chr","mapping:gRNACut_in_chr","mapping:ID","mapping:Gene_name", "mapping:Strands"])) #header
             outcsv.write("\n")
             starttime = datetime.datetime.now()
             cutsite_count = 0
@@ -76,19 +77,21 @@ def main():
                 # outlog.write(gRNA_perf_match_df.to_string(index=False))
                 # outlog.write("\n")
 
-                #TODO: process all matching sites
                 match_chrs =[]
                 match_sites = []
                 match_IDs = []
                 match_names = []
+                match_strands = []
 
                 for i,r in gRNA_perf_match_df.iterrows(): #go through all perfect matches
                     sstart = int(r["sstart"])
                     send =int(r["send"])
                     if sstart < send:
                         cutsite_in_chr = str(int(r["sstart"]) + 16)
+                        match_strand = "+"
                     else:
                         cutsite_in_chr = str(int(r["sstart"]) - 17)
+                        match_strand = "-"
                     match_chr = str(r["sseqid"])
 
                     #get matching IDs and gene names using the cutsite identified
@@ -104,6 +107,7 @@ def main():
                     match_sites.append(cutsite_in_chr)
                     match_IDs.append( ";".join(tmp_IDs)) #there might be multiple matches
                     match_names.append(";".join(tmp_names)) #there might be multiple matches
+                    match_strands.append(match_strand)
 
                 if gRNA_perf_match_df.shape[0] > 1: # write to log for cases  more than one perfect match in the genome
                     outlog.write(",".join(csvrow) + "," + "multiple genomic targets found" + "," + "multiple genomic targets found")
@@ -112,7 +116,7 @@ def main():
                     outlog.write("\n")
 
                 #write to csv
-                outcsv.write(",".join(csvrow) + "," + "|".join(match_chrs) + "," + "|".join(match_sites) + "," +"|".join(match_IDs) + "," + "|".join(match_names))
+                outcsv.write(",".join(csvrow) + "," + "|".join(match_chrs) + "," + "|".join(match_sites) + "," +"|".join(match_IDs) + "," + "|".join(match_names) + "," + "|".join(match_strands))
                 outcsv.write("\n")
                     
                 cutsite_count+=1
@@ -142,12 +146,18 @@ def get_gRNA_perf_match_in_genome(genename, gRNAseq, ref):
     tmp_fa = f"{genename}_{gRNAseq}.fa"
 
     with open(tmp_fa, "w") as wfh:
-        PAM_len = 3
-        wfh.write(f">{genename}_{gRNAseq}_AGG\n{gRNAseq}AGG\n")
-        wfh.write(f">{genename}_{gRNAseq}_CGG\n{gRNAseq}CGG\n")
-        wfh.write(f">{genename}_{gRNAseq}_TGG\n{gRNAseq}TGG\n")
-        wfh.write(f">{genename}_{gRNAseq}_GGG\n{gRNAseq}GGG\n")
-        empty_query_file_flag = 0
+        if config['noPAM']:
+            PAM_len = 0
+            wfh.write(f">{genename}_{gRNAseq}_\n{gRNAseq}\n")
+            empty_query_file_flag = 0
+        else:
+            PAM_len = 3
+            wfh.write(f">{genename}_{gRNAseq}_AGG\n{gRNAseq}AGG\n")
+            wfh.write(f">{genename}_{gRNAseq}_CGG\n{gRNAseq}CGG\n")
+            wfh.write(f">{genename}_{gRNAseq}_TGG\n{gRNAseq}TGG\n")
+            wfh.write(f">{genename}_{gRNAseq}_GGG\n{gRNAseq}GGG\n")
+            empty_query_file_flag = 0
+
 
     if empty_query_file_flag==0:
         #blast
