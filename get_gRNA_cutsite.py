@@ -8,7 +8,7 @@ import datetime
 from utils import *
 import gc
 import logging
-from BLAST_utils import check_blastDB_human
+from BLAST_utils import check_blastDB
 from subprocess import Popen
 import shutil
 import urllib.request
@@ -86,7 +86,7 @@ def main():
                     sstart = int(r["sstart"])
                     send =int(r["send"])
                     if sstart < send:
-                        cutsite_in_chr = str(int(r["sstart"]) + 17)
+                        cutsite_in_chr = str(int(r["sstart"]) + 16)
                     else:
                         cutsite_in_chr = str(int(r["sstart"]) - 17)
                     match_chr = str(r["sseqid"])
@@ -152,7 +152,7 @@ def get_gRNA_perf_match_in_genome(genename, gRNAseq, ref):
     if empty_query_file_flag==0:
         #blast
         # check blastDB (human) and also return BLAST bin directory
-        BLAST_bin, exe_suffix, BLAST_db_path = check_blastDB_human(ref)
+        BLAST_bin, exe_suffix, BLAST_db_path = check_blastDB(ref)
         # specify BLAST db and query
         query = tmp_fa
         # start BLAST
@@ -182,8 +182,8 @@ def read_pickle_files(file):
 def load_ENST_info():
     if not os.path.isfile(os.path.join("BLAST_databases",'ENST_info.pickle')):
         print("...preprossed ENST_info.pickle file not found, rebuilding ENST_info.pickle from GFF3 file")
-        prefix = "http://ftp.ensembl.org/pub/current_gff3/homo_sapiens/" 
-        gff3gz = "Homo_sapiens.GRCh38.107.gff3.gz"
+        prefix = "http://ftp.ensembl.org/pub/release-110/gff3/homo_sapiens/" 
+        gff3gz = "Homo_sapiens.GRCh38.110.gff3.gz"
         gff3gz_path = os.path.join("BLAST_databases",gff3gz)
 
         #check if gff3.gz_path exists

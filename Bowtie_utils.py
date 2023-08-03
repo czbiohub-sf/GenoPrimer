@@ -44,13 +44,13 @@ def check_BowtieIdx(ref):
 
     if ref == "ensembl_GRCh38_latest":
         fa = "Homo_sapiens.GRCh38.dna.primary_assembly.fa"
-        prefix = "http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/"
+        prefix = "http://ftp.ensembl.org/pub/release-110/homo_sapiens/dna/"
     elif ref == "ensembl_GRCm39_latest":
         fa = "Mus_musculus.GRCm39.dna.primary_assembly.fa"
-        prefix = "https://ftp.ensembl.org/pub/release-108/fasta/mus_musculus/dna/"
+        prefix = "https://ftp.ensembl.org/pub/release-110/fasta/mus_musculus/dna/"
     elif ref == "ensembl_GRCz11_latest":
         fa = "Danio_rerio.GRCz11.dna.primary_assembly.fa"
-        prefix = "https://ftp.ensembl.org/pub/release-108/fasta/danio_rerio/dna/"
+        prefix = "https://ftp.ensembl.org/pub/release-110/fasta/danio_rerio/dna/"
     elif ref == "NCBI_refseq_GRCh38.p14":
         fa = "GCF_000001405.40_GRCh38.p14_genomic.fna"
         prefix = "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/reference/GCF_000001405.40_GRCh38.p14/"
