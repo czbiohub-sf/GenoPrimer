@@ -18,9 +18,9 @@ class MyParser(argparse.ArgumentParser):
         sys.exit(2)
 
 def parse_args():
-    parser= MyParser(description='GenoPrimer')
-    parser.add_argument('--csv', default="", type=str, help='path to a csv file containing three columns: ref, chr and coordinate. For details see https://github.com/czbiohub-sf/GenoPrimer#inputs, for examples, see input/example.csv', metavar='')
-    parser.add_argument('--type', default="short", type=str, help='amplicon size, short:300-350bp, long: 3.5kb, default is short', metavar='')
+    parser= MyParser(description='This script designs primers around the gRNA cut site')
+    parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', metavar='')
+    parser.add_argument('--type', default="short", type=str, help='amplicon size, short:300-350bp, long: 3.5kb, sanger: 700-800bp, default is short', metavar='')
     parser.add_argument('--thread', default="4", type=str, help='auto or an integer, auto = use max-2', metavar='')
     parser.add_argument('--outdir', default="out", type=str, help='name of the output directory relative to GenoPrimer.py', metavar='')
     #parser.add_argument('--genome', default="ensembl_GRCh38_latest", type=str, help='other accepted values are: NCBI_refseq_GRCh38.p14', metavar='')
@@ -47,11 +47,17 @@ min_dist2center_from_user = config["min_dist2edit"]
 num_primer_return = 3
 num_primers_from_Primer3 = 397 + num_primer_return
 
-#default settings for MiSeq
+#default settings for MiSeq/short
 prod_size_lower = 250
 prod_size_upper = 350
 step_size = 40
 min_dist2center = 100
+
+if config['type'] == "sanger":
+    prod_size_lower = 700
+    prod_size_upper = 900
+    step_size = 80
+    min_dist2center = 100
 
 if config['type'] == "long":
     prod_size_lower = 3300
@@ -85,7 +91,13 @@ def main():
                 sys.exit("Please fix the error(s) above and rerun the script")
 
             #read input csv file
-            df = pd.read_csv(os.path.join(config['csv']))
+            try:
+                df = pd.read_csv(os.path.join(config['csv']))
+                log.info(f"Input file: {config['csv']}")
+            except:
+                log.error(f"failed to read input csv file from path: {config['csv']}")
+                sys.exit("Please fix the error(s) above and rerun the script")
+                
             #convert genome string to be recognizable
             df['ref'] = df['ref'].apply(get_genome_string)
 
@@ -129,7 +141,11 @@ def main():
                     if flag1:
                         ref = row["ref"]
                         Chr = row["chr"]
-                        coordinate = int(row["coordinate"])
+                        try:
+                            coordinate = int(row["coordinate"])
+                        except:
+                            log.error(f"coordinate is not an integer: {row['coordinate']}")
+                            continue
                     if flag2:
                         ref = row["ref"]
                         Chr = str(row["mapping:Ensemble_chr"])
@@ -159,10 +175,7 @@ def main():
                     #search for precomputed primers, end current iteration if found
                     precomputed_res = search_precomputed_results(res_dir_base = "precomputed_primers", PrimerMode = config['type'], Genome = ref, Chr = Chr, Coordinate = coordinate)
                     if precomputed_res is not None:
-                        #remove the first three colums and replace with the input dataframe
-                        csvrow = [str(item) for item in row]
-                        res2write = ",".join(csvrow) + "," + ",".join(precomputed_res.split(",")[3:])
-                        outcsv.write(res2write)
+                        outcsv.write(precomputed_res)
                         cutsite_count += 1
                         primer_count += 3 #TODO fix this inaccurate number
                         good_primer_count += 3 #TODO fix this inaccurate number
@@ -172,8 +185,8 @@ def main():
 
                     #proceed to compute primers
                     #get sequence from chromosome, get (stepsize) bp extra on each side, will progressively include in considered zone if no primers were found
-                    amp_st = str(int(int(coordinate) - int(prod_size_upper)/2) - step_size*4 ) # buffer zone = step_size*4 bp
-                    amp_en = str(int(int(coordinate) + int(prod_size_upper)/2) + step_size*4 ) # buffer zone = step_size*4 bp
+                    amp_st = str(int(int(coordinate) - int(prod_size_upper)/2) - step_size*3 ) # buffer zone = step_size*3 bp
+                    amp_en = str(int(int(coordinate) + int(prod_size_upper)/2) + step_size*3 ) # buffer zone = step_size*3 bp
                     chr_region = get_sequence(chromosome = str(Chr), region_left = amp_st, region_right = amp_en, genome = ref, aligner = config["aligner"]) #switched from get_ensembl_sequence() to get_sequence()
 
                     #design primer

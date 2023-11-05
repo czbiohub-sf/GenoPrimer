@@ -156,9 +156,9 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
     User_dict1={
             'SEQUENCE_ID': 'inputSeq',
             'SEQUENCE_TEMPLATE': inputSeq,
-            'SEQUENCE_EXCLUDED_REGION': [[1,3*step_size], #start coordinate, length
-                                         [math.floor(len(inputSeq)/2) - min_dist2center, 2*min_dist2center], #start coordinate, length
-                                         [len(inputSeq)-3*step_size-1, 3*step_size]] #start coordinate, length
+            'SEQUENCE_EXCLUDED_REGION': [[1,3*step_size],
+                                         [math.floor(len(inputSeq)/2) - min_dist2center, 2*min_dist2center],
+                                         [len(inputSeq)-3*step_size-1, 3*step_size]]
             #'SEQUENCE_PRIMER_PAIR_OK_REGION_LIST ': [[1 + step_size*3,                                                                    #Forward primer region start
             #                                         math.floor(len(inputSeq)/2) - min_dist2center - 1 - step_size*3,                     #Forward primer region length
             #                                         math.floor(len(inputSeq)/2) + min_dist2center,                                       #Reverse primer region start
@@ -317,7 +317,6 @@ def get_default_thermo_dict():
             'PRIMER_OPT_TM': 60.0,
             'PRIMER_MIN_TM': 57.0,
             'PRIMER_MAX_TM': 63.0,
-            'PRIMER_MAX_DIFF_TM': 3,
             'PRIMER_MIN_GC': 20.0,
             'PRIMER_MAX_GC': 80.0,
             'PRIMER_MAX_POLY_X': 100,
@@ -333,13 +332,11 @@ def get_default_thermo_dict():
 
 def relax_MIN_MAX_TM(thermo_dict):
     """
-    decrease PRIMER_MIN_TM by 0.5
-    increase PRIMER_MAX_TM by 0.5
-    increase the max TM difference by 1
+    decrease PRIMER_MIN_TM by 1
+    increase PRIMER_MAX_TM by 1
     :param thermo_dict:
     :return: thermo_dict
     """
-    thermo_dict['PRIMER_MAX_DIFF_TM'] += 1
     thermo_dict['PRIMER_MIN_TM'] -= 0.5
     thermo_dict['PRIMER_MAX_TM'] += 0.5
     return thermo_dict
