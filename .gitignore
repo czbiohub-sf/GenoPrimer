@@ -37,3 +37,4 @@ slurm.out
 BLAST_databases/*
 precomputed_primers
 out
+Bowtie_indices/*

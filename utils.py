@@ -132,7 +132,7 @@ def get_ensembl_sequence(chromosome,region_left,region_right,species,expand=0):
     sequence = Seq(r.text)
     return sequence
 
-def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_size, ref, chr, cut_coord, min_dist2center, num_primers_from_Primer3, thread, fhlog, outdir, aligner):
+def get_primers(inputSeq, prod_size_lower, prod_size_upper, tm_args, num_return, step_size, ref, chr, cut_coord, min_dist2center, num_primers_from_Primer3, thread, fhlog, outdir, aligner):
     """
     :param prod_size_lower:   product size lower bound
     :param prod_size_upper:   product size upper bound
@@ -152,6 +152,11 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, num_return, step_siz
 
     #create dicts as inputs for primer3
     thermo_dict = get_default_thermo_dict()
+
+    thermo_dict['PRIMER_MIN_TM'] = tm_args[0]
+    thermo_dict['PRIMER_OPT_TM'] = tm_args[1]
+    thermo_dict['PRIMER_MAX_TM'] = tm_args[2]
+    
 
     User_dict1={
             'SEQUENCE_ID': 'inputSeq',

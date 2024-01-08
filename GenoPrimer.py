@@ -26,6 +26,9 @@ def parse_args():
     #parser.add_argument('--genome', default="ensembl_GRCh38_latest", type=str, help='other accepted values are: NCBI_refseq_GRCh38.p14', metavar='')
     parser.add_argument('--db', default="Ensembl", type=str, help='name of the output directory', metavar='')
     parser.add_argument('--min_dist2edit', default = 101, type=int, help='minimum distance to the edit site', metavar='')
+    parser.add_argument('--min_tm', default=57.0, type=float, help='min melting temperature (Tm)', metavar='')
+    parser.add_argument('--opt_tm', default=60.0, type=float, help='optimum melting temperature (Tm)', metavar='')
+    parser.add_argument('--max_tm', default=63.0, type=float, help='max melting temperature (Tm)', metavar='')
     parser.add_argument('--oneliner_input', default="", type=str, help='ref,chr,coordinate.  Example: ensembl_GRCh38_latest,20,17482068', metavar='')
     parser.add_argument('--aligner', default="Bowtie", type=str, help='program to align primers to the genome to check non-specific amplifications, default is Bowtie. other options: BLAST', metavar='')
     config = parser.parse_args()
@@ -46,6 +49,10 @@ oneliner = config["oneliner_input"]
 min_dist2center_from_user = config["min_dist2edit"]
 num_primer_return = 3
 num_primers_from_Primer3 = 397 + num_primer_return
+min_tm = 57.0
+opt_tm = 60.0
+max_tm = 63.0
+tm_args = [min_tm, opt_tm, max_tm]
 
 #default settings for MiSeq/short
 prod_size_lower = 250
@@ -193,6 +200,7 @@ def main():
                     primerlist, relaxation_count, good_primer_num = get_primers(inputSeq = str(chr_region),
                                              prod_size_lower=prod_size_lower,
                                              prod_size_upper=prod_size_upper,
+                                             tm_args = tm_args,
                                              num_return = num_primer_return,
                                              step_size = step_size,
                                              ref = ref,
