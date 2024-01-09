@@ -49,9 +49,9 @@ oneliner = config["oneliner_input"]
 min_dist2center_from_user = config["min_dist2edit"]
 num_primer_return = 3
 num_primers_from_Primer3 = 397 + num_primer_return
-min_tm = 57.0
-opt_tm = 60.0
-max_tm = 63.0
+min_tm = config["min_tm"]
+opt_tm = config["opt_tm"]
+max_tm = config["max_tm"]
 tm_args = [min_tm, opt_tm, max_tm]
 
 #default settings for MiSeq/short
