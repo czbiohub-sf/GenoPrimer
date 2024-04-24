@@ -19,18 +19,26 @@ class MyParser(argparse.ArgumentParser):
 
 def parse_args():
     parser= MyParser(description='This script designs primers around the gRNA cut site')
-    parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', metavar='')
-    parser.add_argument('--type', default="short", type=str, help='amplicon size, short:300-350bp, long: 3.5kb, sanger: 700-800bp, default is short', metavar='')
-    parser.add_argument('--thread', default="4", type=str, help='auto or an integer, auto = use max-2', metavar='')
-    parser.add_argument('--outdir', default="out", type=str, help='name of the output directory relative to GenoPrimer.py', metavar='')
-    #parser.add_argument('--genome', default="ensembl_GRCh38_latest", type=str, help='other accepted values are: NCBI_refseq_GRCh38.p14', metavar='')
-    parser.add_argument('--db', default="Ensembl", type=str, help='name of the output directory', metavar='')
-    parser.add_argument('--min_dist2edit', default = 101, type=int, help='minimum distance to the edit site', metavar='')
-    parser.add_argument('--min_tm', default=57.0, type=float, help='min melting temperature (Tm)', metavar='')
-    parser.add_argument('--opt_tm', default=60.0, type=float, help='optimum melting temperature (Tm)', metavar='')
-    parser.add_argument('--max_tm', default=63.0, type=float, help='max melting temperature (Tm)', metavar='')
-    parser.add_argument('--oneliner_input', default="", type=str, help='ref,chr,coordinate.  Example: ensembl_GRCh38_latest,20,17482068', metavar='')
-    parser.add_argument('--aligner', default="Bowtie", type=str, help='program to align primers to the genome to check non-specific amplifications, default is Bowtie. other options: BLAST', metavar='')
+    parser.add_argument('--csv', default="", type=str, help='path to the gRNA csv file', metavar="")
+    parser.add_argument('--type', default="short", type=str, help='amplicon size, short:300-350bp, long: 3.5kb, sanger: 700-800bp, default is short', metavar="")
+    parser.add_argument('--thread', default="4", type=str, help='auto or an integer, auto = use max-2', metavar="")
+    parser.add_argument('--outdir', default="out", type=str, help='name of the output directory relative to GenoPrimer.py', metavar="")
+    #parser.add_argument('--genome', default="ensembl_GRCh38_latest", type=str, help='other accepted values are: NCBI_refseq_GRCh38.p14', metavar="")
+    parser.add_argument('--db', default="Ensembl", type=str, help='name of the output directory', metavar="")
+    parser.add_argument('--min_dist2edit', default = 101, type=int, help='minimum distance to the edit site', metavar="")
+    
+    parser.add_argument('--prod_size_lower', default=250, type=int, help='minimum product size, overrides amplicon type', metavar="<int>")
+    parser.add_argument('--prod_size_upper', default=350, type=int, help='maximum product size, overrides amplicon type', metavar="<int>")
+
+    parser.add_argument('--min_tm', default=57.0, type=float, help='min melting temperature (Tm)', metavar="<float>")
+    parser.add_argument('--opt_tm', default=60.0, type=float, help='optimum melting temperature (Tm)', metavar="<float>")
+    parser.add_argument('--max_tm', default=63.0, type=float, help='max melting temperature (Tm)', metavar="<float>")
+
+    parser.add_argument('--oneliner_input', default="", type=str, help='ref,chr,coordinate.  Example: ensembl_GRCh38_latest,20,17482068', metavar="")
+    parser.add_argument('--aligner', default="Bowtie", type=str, help='program to align primers to the genome to check non-specific amplifications, default is Bowtie. other options: BLAST', metavar="")
+
+    parser.add_argument('--check_precomputed', default=False, action="store_true", help='check if precomputed primers exist')
+
     config = parser.parse_args()
     if len(sys.argv)==1: # print help message if arguments are not valid
         parser.print_help()
@@ -54,23 +62,48 @@ opt_tm = config["opt_tm"]
 max_tm = config["max_tm"]
 tm_args = [min_tm, opt_tm, max_tm]
 
-#default settings for MiSeq/short
-prod_size_lower = 250
-prod_size_upper = 350
-step_size = 40
-min_dist2center = 100
+def compute_step_size(prod_size_lower):
+    return int(-29/1427400*prod_size_lower**2 + 15443/142740*prod_size_lower + 33835/2379)
 
-if config['type'] == "sanger":
+# check if custom product size is specified
+if config['prod_size_lower'] != 250 or config['prod_size_upper'] != 350:
+    config['type'] = "custom"
+    step_size = compute_step_size(config['prod_size_lower'])
+    if config['prod_size_lower'] >= 3300:
+        min_dist2center = 1000
+    elif config['prod_size_lower'] >= 2500:
+        min_dist2center = 700
+    elif config['prod_size_lower'] >= 1500:
+        min_dist2center = 300
+    elif config['prod_size_lower'] >= 700:
+        min_dist2center = 150
+    else:
+        min_dist2center = 100 
+
+# apply default values based on amplicon type 
+if config['type'] == "short":
+    prod_size_lower = 250
+    prod_size_upper = 350
+    step_size = 40
+    min_dist2center = 100
+elif config['type'] == "sanger":
     prod_size_lower = 700
     prod_size_upper = 900
     step_size = 80
     min_dist2center = 100
-
-if config['type'] == "long":
+elif config['type'] == "long":
     prod_size_lower = 3300
     prod_size_upper = 3700
     step_size = 150
     min_dist2center = 1000
+
+# set product size (overrides type)
+prod_size_lower = config['prod_size_lower']
+prod_size_upper = config['prod_size_upper']
+prod_size_args = [prod_size_lower, prod_size_upper]
+if prod_size_lower > prod_size_upper:
+    log.error(f"product size lower bound is greater than upper bound")
+    sys.exit("Please fix the error(s above and rerun the script")
 
 # set minimum distance to edit site if a non-default value is detected
 if min_dist2center_from_user != 101: 
@@ -108,13 +141,13 @@ def main():
             #convert genome string to be recognizable
             df['ref'] = df['ref'].apply(get_genome_string)
 
-            must_have_cols1 = ["ref", "chr", "coordinate"]
+            must_have_cols1 = ["ref", "chr", "coordinate", "Entry"]
             flag1 = all(col in df.columns for col in must_have_cols1)
             must_have_cols2 = ["ref","mapping:Ensemble_chr","mapping:gRNACut_in_chr"]
             flag2 = all(col in df.columns for col in must_have_cols2)
 
             if (flag1 or flag2) == False:
-                log.error(f"The csv file does not contain all the required columns: [ref, chr, coordinate] or [ref, mapping:Ensemble_chr, mapping:gRNACut_in_chr]")
+                log.error(f"The csv file does not contain all the required columns: [ref, chr, coordinate, Entry] or [ref, mapping:Ensemble_chr, mapping:gRNACut_in_chr]")
                 sys.exit("Please fix the error(s) above and rerun the script")
             #make a copy of the input to the output folder
             if not os.path.isfile(os.path.join(outdir,"input.csv")):
@@ -131,8 +164,14 @@ def main():
         #make output dir
         mkdir(outdir)
 
+        # output file name
+        if config["check_precomputed"]:
+            outpath = os.path.join(outdir, f"out_precomputed.csv")
+        else:
+            outpath = os.path.join(outdir, f"out.csv")
+
         #make output csv and begin looping over input
-        with open(os.path.join(outdir, f"out.csv"), 'w') as outcsv:
+        with open(outpath, 'w') as outcsv:
             outcsv.write(",".join(list(df.columns) + ["Constraints_relaxation_iterations", "Primer Pair 1 For", "Primer Pair 1 Rev", "Primer Pair 1 For tm", "Primer Pair 1 Rev tm", "Primer Pair 1 Prod Size", "Primer Pair 2 For", "Primer Pair 2 Rev", "Primer Pair 2 For tm", "Primer Pair 2 Rev tm", "Primer Pair 2 Prod Size", "Primer Pair 3 For", "Primer Pair 3 Rev", "Primer Pair 3 For tm", "Primer Pair 3 Rev tm", "Primer Pair 3 Prod Size"])) #header
             outcsv.write("\n")
             starttime = datetime.datetime.now()
@@ -179,8 +218,15 @@ def main():
                     log.info(f"({index+1}/{len(df.index)}) Processing cutsite:  Genome:{ref}, Chr:{Chr}, cut_coordinate: {coordinate}")
                     fhlog.write(f"({index+1}/{len(df.index)}) Processing cutsite: Genome:{ref}, Chr:{Chr}, cut_coordinate: {coordinate}\n")
 
+                    # write the first few columns of the input to output
+                    outcsv.write(",".join([str(item) for item in row.values]))
+
                     #search for precomputed primers, end current iteration if found
-                    precomputed_res = search_precomputed_results(res_dir_base = "precomputed_primers", PrimerMode = config['type'], Genome = ref, Chr = Chr, Coordinate = coordinate)
+                    entry = row["Entry"] if "Entry" in row else "" #for the case where the input is from a csv file
+                    precomputed_res = search_precomputed_results(res_dir_base = "precomputed_primers", PrimerMode = config['type'], Genome = ref, Chr = Chr, Coordinate = coordinate, entry = entry)
+                    if config["check_precomputed"] and precomputed_res is not None:
+                        outcsv.write("\tprecomputed primers exists\n")
+                        continue #skip computing primers for this site
                     if precomputed_res is not None:
                         outcsv.write(precomputed_res)
                         cutsite_count += 1
@@ -188,7 +234,7 @@ def main():
                         good_primer_count += 3 #TODO fix this inaccurate number
                         log.info(f"found precomputed primers, skip calculation for this site")
                         fhlog.write(f"found precomputed primers, skip calculation for this site")
-                        continue
+                        continue #skip computing primers for this site
 
                     #proceed to compute primers
                     #get sequence from chromosome, get (stepsize) bp extra on each side, will progressively include in considered zone if no primers were found
@@ -222,7 +268,7 @@ def main():
                     else:
                         tmp_list = flatten([[i["Lseq"], i["Rseq"], str(round(i["Ltm"],2)), str(round(i["Rtm"],2)), str(i["prodSize"])] for i in primerlist])
                         csvrow = [str(item) for item in row]
-                        outcsv.write(",".join(csvrow) + "," + str(relaxation_count) + "," + ",".join(tmp_list))
+                        outcsv.write(",".join(csvrow[5:]) + "," + str(relaxation_count) + "," + ",".join(tmp_list))
                         outcsv.write("\n")
                         primer_count += len(primerlist)
                         good_primer_count += good_primer_num
@@ -284,7 +330,7 @@ def get_genome_string(ver):
 def closest_idx(lst, K):
     return min(range(len(lst)), key = lambda i: abs(lst[i]-K))
 
-def search_precomputed_results(res_dir_base = "precomputed_primers", PrimerMode = "short", Genome = "GRCh38", Chr = "", Coordinate = ""):
+def search_precomputed_results(res_dir_base = "precomputed_primers", PrimerMode = "short", Genome = "GRCh38", Chr = "", Coordinate = "", entry=""):
     Genome = Genome.rstrip("_latest").lstrip("ensembl_")
     result_by_chr_dir = os.path.join(res_dir_base,PrimerMode,f"ensembl_{Genome}_latest",str(Chr))
     if os.path.isdir(result_by_chr_dir):
@@ -300,10 +346,18 @@ def search_precomputed_results(res_dir_base = "precomputed_primers", PrimerMode 
                     header = f.readline()
                     result = f.readline()
                 col_count_res = len(result.split(","))
-                if col_count_res >= 9: #for valid results, change the site to the target site
-                    fields = result.split(",")
-                    fields[2] = str(Coordinate) # change the site in the result to the target site
-                    result = ",".join(fields) 
+
+                # if col_count_res >= 9: #for valid results, change the site to the target site
+                #     fields = result.split(",")
+                #     fields[2] = str(Coordinate) # change the site in the result to the target site
+                #     result = ",".join(fields[3:]) 
+                #     if entry != "":
+                #         result = str(entry) + "," + result
+
+                fields = result.split(",")
+                result = ",".join(fields[3:]) 
+                result = str(entry) + "," + result
+
                 #no need to filter out cases where primers are not found
                 return result
     return None
