@@ -217,7 +217,7 @@ def find_primer_parings(df_1pair, dict_primers, max_pcr_prod_size, dict_primer_l
                         dist = max_coord - min_coord
                         # require the PCR product to be between 20bp and  max_pcr_prod_size
                         if 20 <= dist <= max_pcr_prod_size:
-                            if float(row_i["pident"]) >= 80.0 and float(row_j["pident"]) >= 80.0:  # row_i["mismatch"]<=3 and row_j["mismatch"]<=3 and
+                            if float(row_i["pident"]) >= 75.0 and float(row_j["pident"]) >= 75.0:  # row_i["mismatch"]<=3 and row_j["mismatch"]<=3 and
                                 # require less than 3 mismatches
                                 if row_i["qend"] == dict_primer_len[row_i["qseqid"]] and row_j["qend"] == dict_primer_len[row_j["qseqid"]]:  # require the 3' end to match
                                     # check if this product is intended

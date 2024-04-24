@@ -150,13 +150,10 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, tm_args, num_return,
 
     prod_size_upper = min([len(inputSeq), prod_size_upper])  #product size can't be longer than the length of the input seq. In long mode, some times there weren't enough template sequence
 
-    #create dicts as inputs for primer3
-    thermo_dict = get_default_thermo_dict()
+    min_tm, opt_tm, max_tm = float(tm_args[0]), float(tm_args[1]), float(tm_args[2])
 
-    thermo_dict['PRIMER_MIN_TM'] = tm_args[0]
-    thermo_dict['PRIMER_OPT_TM'] = tm_args[1]
-    thermo_dict['PRIMER_MAX_TM'] = tm_args[2]
-    
+    #create dicts as inputs for primer3
+    thermo_dict = get_default_thermo_dict(min_tm=min_tm, opt_tm=opt_tm, max_tm=max_tm)
 
     User_dict1={
             'SEQUENCE_ID': 'inputSeq',
@@ -312,16 +309,16 @@ def get_primers(inputSeq, prod_size_lower, prod_size_upper, tm_args, num_return,
         good_primer_num = dict_primers['PRIMER_PAIR_NUM_RETURNED'] - len(dict_primers["UNSPECIFIC_PRIMER_PAIR_idx"])
         return [primer_list, relaxation_count, good_primer_num]
 
-def get_default_thermo_dict():
+def get_default_thermo_dict(min_tm=57.0, opt_tm=60.0, max_tm=63.0):
     return {
             'PRIMER_OPT_SIZE': 20,
             'PRIMER_PICK_INTERNAL_OLIGO': 1,
             'PRIMER_INTERNAL_MAX_SELF_END': 8,
             'PRIMER_MIN_SIZE': 18,
             'PRIMER_MAX_SIZE': 25,
-            'PRIMER_OPT_TM': 60.0,
-            'PRIMER_MIN_TM': 57.0,
-            'PRIMER_MAX_TM': 63.0,
+            'PRIMER_OPT_TM': opt_tm,
+            'PRIMER_MIN_TM': min_tm,
+            'PRIMER_MAX_TM': max_tm,
             'PRIMER_MIN_GC': 20.0,
             'PRIMER_MAX_GC': 80.0,
             'PRIMER_MAX_POLY_X': 100,
