@@ -1,7 +1,8 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/czbiohub/GenoPrimer)
 
 # GenoPrimer
-Automated primer design for genotyping CRISPR edited cells via amplicon sequencing
+Automated primer design for genotyping CRISPR edited cells via amplicon sequencing   
+GenoPrimer is described in the protoSpaceJAM [preprint](https://www.biorxiv.org/content/10.1101/2023.10.04.560793v1)
 
 ## Features
 - Two modes: short (250 bp amplicon, MiSeq) and long (~3000 bp amplicon, PacBio)
